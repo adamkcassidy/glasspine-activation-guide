@@ -10,6 +10,8 @@ import type { GuideScene } from '@/lib/guide-scripts'
 import {
   COMPLETE_SEED_MESSAGES,
   MAINTENANCE_PROACTIVE,
+  MEASURE_SEED_MESSAGES,
+  NUDGES_SEED_MESSAGES,
   WELCOME_SEQUENCE,
 } from '@/lib/guide-scripts'
 import { BANK_ACCOUNTS, ROOM_LABELS } from '@/lib/resident'
@@ -40,7 +42,21 @@ export type ChatMessage = {
   source?: 'live' | 'scripted'
 }
 
-export type MaintenancePriority = 'emergency' | 'routine' | null
+export type MaintenancePhase =
+  | 'listening'
+  | 'clarifying'
+  | 'emergency_handoff'
+  | 'drafting'
+  | 'submitted'
+
+export type MaintenanceDraft = {
+  issue: string
+  location: string
+  priority: 'routine' | 'emergency'
+  photoSrc: string | null
+  permissionToEnter: boolean
+  ticketId: string | null
+}
 
 export type ChecklistState = {
   photos: UnitPhoto[]
@@ -59,11 +75,16 @@ export type ChecklistState = {
   removeHouseholdMember: (id: string) => void
   completeHousehold: () => void
   completeAutopay: (info: AutopayInfo) => void
-  // Maintenance scene
-  maintenancePriority: MaintenancePriority
-  maintenanceSubmitted: boolean
-  setMaintenancePriority: (p: MaintenancePriority) => void
-  setMaintenanceSubmitted: (v: boolean) => void
+  // Maintenance
+  maintenancePhase: MaintenancePhase
+  maintenanceDraft: MaintenanceDraft
+  setMaintenancePhase: (phase: MaintenancePhase) => void
+  updateMaintenanceDraft: (patch: Partial<MaintenanceDraft>) => void
+  beginMaintenanceClarifying: (issue?: string) => void
+  chooseMaintenanceEmergency: () => void
+  chooseMaintenanceRoutine: () => void
+  submitMaintenanceRequest: () => void
+  resetMaintenance: () => void
   // Chat / demo session
   messages: ChatMessage[]
   chips: string[]
@@ -80,6 +101,15 @@ export type ChecklistState = {
 }
 
 const ChecklistContext = createContext<ChecklistState | null>(null)
+
+const DEFAULT_DRAFT: MaintenanceDraft = {
+  issue: '',
+  location: 'Apt 4B kitchen',
+  priority: 'routine',
+  photoSrc: null,
+  permissionToEnter: true,
+  ticketId: null,
+}
 
 function buildRoomPhotos(takenAt = new Date().toISOString()): UnitPhoto[] {
   return ROOM_LABELS.map((label, i) => ({
@@ -103,6 +133,10 @@ function seedAutopay(): AutopayInfo {
   }
 }
 
+function emptyDraft(): MaintenanceDraft {
+  return { ...DEFAULT_DRAFT }
+}
+
 export function ChecklistProvider({ children }: { children: ReactNode }) {
   const [photos, setPhotos] = useState<UnitPhoto[]>([])
   const [photosDone, setPhotosDone] = useState(false)
@@ -110,8 +144,8 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
   const [householdDone, setHouseholdDone] = useState(false)
   const [autopay, setAutopay] = useState<AutopayInfo | null>(null)
 
-  const [maintenancePriority, setMaintenancePriority] = useState<MaintenancePriority>(null)
-  const [maintenanceSubmitted, setMaintenanceSubmitted] = useState(false)
+  const [maintenancePhase, setMaintenancePhase] = useState<MaintenancePhase>('listening')
+  const [maintenanceDraft, setMaintenanceDraft] = useState<MaintenanceDraft>(emptyDraft)
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [chips, setChips] = useState<string[]>([])
@@ -153,6 +187,46 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     setAutopay(info)
   }, [])
 
+  const updateMaintenanceDraft = useCallback((patch: Partial<MaintenanceDraft>) => {
+    setMaintenanceDraft((prev) => ({ ...prev, ...patch }))
+  }, [])
+
+  const beginMaintenanceClarifying = useCallback((issue = 'Kitchen faucet dripping') => {
+    setMaintenanceDraft({
+      ...emptyDraft(),
+      issue,
+      location: 'Apt 4B kitchen',
+      photoSrc: '/rooms/room-1.jpg',
+    })
+    setMaintenancePhase('clarifying')
+  }, [])
+
+  const chooseMaintenanceEmergency = useCallback(() => {
+    setMaintenanceDraft((prev) => ({ ...prev, priority: 'emergency' }))
+    setMaintenancePhase('emergency_handoff')
+  }, [])
+
+  const chooseMaintenanceRoutine = useCallback(() => {
+    setMaintenanceDraft((prev) => ({
+      ...prev,
+      priority: 'routine',
+      issue: prev.issue || 'Kitchen faucet dripping',
+      photoSrc: prev.photoSrc || '/rooms/room-1.jpg',
+    }))
+    setMaintenancePhase('drafting')
+  }, [])
+
+  const submitMaintenanceRequest = useCallback(() => {
+    const ticketId = `WO-${Math.floor(10000 + Math.random() * 90000)}`
+    setMaintenanceDraft((prev) => ({ ...prev, ticketId }))
+    setMaintenancePhase('submitted')
+  }, [])
+
+  const resetMaintenance = useCallback(() => {
+    setMaintenancePhase('listening')
+    setMaintenanceDraft(emptyDraft())
+  }, [])
+
   const clearPendingBoot = useCallback(() => {
     setPendingBoot(null)
   }, [])
@@ -163,8 +237,8 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     setHousehold([])
     setHouseholdDone(false)
     setAutopay(null)
-    setMaintenancePriority(null)
-    setMaintenanceSubmitted(false)
+    setMaintenancePhase('listening')
+    setMaintenanceDraft(emptyDraft())
     setMessages([])
     setChips([])
     setLastSource(null)
@@ -177,8 +251,8 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     setChips([])
     setLastSource(null)
     setChatCollapsed(false)
-    setMaintenancePriority(null)
-    setMaintenanceSubmitted(false)
+    setMaintenancePhase('listening')
+    setMaintenanceDraft(emptyDraft())
 
     switch (scene) {
       case 'welcome':
@@ -200,8 +274,7 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
         ])
         break
       case 'complete': {
-        const takenAt = new Date().toISOString()
-        setPhotos(buildRoomPhotos(takenAt))
+        setPhotos(buildRoomPhotos())
         setPhotosDone(true)
         setHousehold(seedHousehold())
         setHouseholdDone(true)
@@ -215,7 +288,30 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
         setHousehold(seedHousehold())
         setHouseholdDone(true)
         setAutopay(seedAutopay())
+        setMaintenanceDraft({
+          ...emptyDraft(),
+          issue: 'Kitchen faucet dripping',
+          location: 'Apt 4B kitchen',
+          photoSrc: '/rooms/room-1.jpg',
+        })
+        setMaintenancePhase('clarifying')
         setPendingBoot([...MAINTENANCE_PROACTIVE])
+        break
+      case 'nudges':
+        setPhotos([])
+        setPhotosDone(false)
+        setHousehold(seedHousehold())
+        setHouseholdDone(true)
+        setAutopay(null)
+        setPendingBoot([...NUDGES_SEED_MESSAGES])
+        break
+      case 'measure':
+        setPhotos(buildRoomPhotos())
+        setPhotosDone(true)
+        setHousehold(seedHousehold())
+        setHouseholdDone(true)
+        setAutopay(seedAutopay())
+        setPendingBoot([...MEASURE_SEED_MESSAGES])
         break
     }
   }, [])
@@ -243,10 +339,15 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       removeHouseholdMember,
       completeHousehold,
       completeAutopay,
-      maintenancePriority,
-      maintenanceSubmitted,
-      setMaintenancePriority,
-      setMaintenanceSubmitted,
+      maintenancePhase,
+      maintenanceDraft,
+      setMaintenancePhase,
+      updateMaintenanceDraft,
+      beginMaintenanceClarifying,
+      chooseMaintenanceEmergency,
+      chooseMaintenanceRoutine,
+      submitMaintenanceRequest,
+      resetMaintenance,
       messages,
       chips,
       lastSource,
@@ -276,8 +377,14 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       removeHouseholdMember,
       completeHousehold,
       completeAutopay,
-      maintenancePriority,
-      maintenanceSubmitted,
+      maintenancePhase,
+      maintenanceDraft,
+      updateMaintenanceDraft,
+      beginMaintenanceClarifying,
+      chooseMaintenanceEmergency,
+      chooseMaintenanceRoutine,
+      submitMaintenanceRequest,
+      resetMaintenance,
       messages,
       chips,
       lastSource,

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Loader2, Send, Sparkles } from 'lucide-react'
-import { askGuide, delay } from '@/lib/guide-client'
+import { askGuideStreaming, delay } from '@/lib/guide-client'
 import { getSuggestedChips, type GuideScene } from '@/lib/guide-scripts'
 import { useChecklist, type ChatMessage } from '@/lib/checklist-state'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -14,6 +14,8 @@ function sceneFromPath(pathname: string): GuideScene {
   if (pathname.startsWith('/checklist')) return 'checklist'
   if (pathname.startsWith('/complete')) return 'complete'
   if (pathname.startsWith('/maintenance')) return 'maintenance'
+  if (pathname.startsWith('/nudges')) return 'nudges'
+  if (pathname.startsWith('/measure')) return 'measure'
   return 'welcome'
 }
 
@@ -57,22 +59,31 @@ export function GuideChat({ className }: GuideChatProps) {
     messages,
     chips,
     pendingBoot,
-    maintenancePriority,
+    photosDone,
+    householdDone,
+    autopayDone,
+    photos,
+    household,
+    completedCount,
+    totalCount,
+    maintenancePhase,
+    beginMaintenanceClarifying,
+    chooseMaintenanceEmergency,
+    chooseMaintenanceRoutine,
+    submitMaintenanceRequest,
     setMessages,
     setChips,
     setLastSource,
     clearPendingBoot,
-    setMaintenancePriority,
-    setMaintenanceSubmitted,
   } = useChecklist()
 
   const [typing, setTyping] = useState(false)
+  const [streaming, setStreaming] = useState(false)
   const [booting, setBooting] = useState(false)
   const [input, setInput] = useState('')
   const listRef = useRef<HTMLDivElement>(null)
   const bootIdRef = useRef(0)
 
-  // Boot pending intro messages from session context
   useEffect(() => {
     if (!pendingBoot || pendingBoot.length === 0) return
 
@@ -113,48 +124,68 @@ export function GuideChat({ className }: GuideChatProps) {
     }
   }, [pendingBoot, clearPendingBoot, setMessages, setChips, setLastSource, scene])
 
-  // Scroll only inside the message list — never the page
   useEffect(() => {
     const el = listRef.current
     if (!el) return
     el.scrollTop = el.scrollHeight
-  }, [messages, typing])
+  }, [messages, typing, streaming])
+
+  function applyMaintenanceSideEffects(trimmed: string) {
+    if (scene !== 'maintenance') return false
+
+    if (/gas smell|fire|flood|spark|no heat/i.test(trimmed) || /gas smell \/ emergency/i.test(trimmed)) {
+      beginMaintenanceClarifying(/gas/i.test(trimmed) ? 'Possible gas smell' : trimmed)
+      chooseMaintenanceEmergency()
+      return false
+    }
+    if (/kitchen faucet|dripping|leak|broken|appliance/i.test(trimmed)) {
+      beginMaintenanceClarifying(
+        /faucet|drip/i.test(trimmed) ? 'Kitchen faucet dripping' : trimmed,
+      )
+      return false
+    }
+    if (/it'?s an emergency|submit as emergency/i.test(trimmed)) {
+      chooseMaintenanceEmergency()
+      return false
+    }
+    if (/routine|not that urgent|i can shut it off/i.test(trimmed)) {
+      chooseMaintenanceRoutine()
+      return false
+    }
+    if (/submit/i.test(trimmed) && maintenancePhase === 'drafting') {
+      submitMaintenanceRequest()
+      setInput('')
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), role: 'user', content: trimmed },
+        {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content:
+            'Request submitted. Expect a response within 1–2 business days — you can track it from the confirmation card.',
+          source: 'scripted',
+        },
+      ])
+      setChips(['What counts as emergency?'])
+      setLastSource('scripted')
+      return true
+    }
+    return false
+  }
 
   async function send(text: string) {
     const trimmed = text.trim()
-    if (!trimmed || typing || booting) return
+    if (!trimmed || typing || booting || streaming) return
 
-    // Maintenance scene: chips can drive the left-panel request UI
-    if (scene === 'maintenance') {
-      if (/emergency/i.test(trimmed) && !/not that urgent/i.test(trimmed)) {
-        setMaintenancePriority('emergency')
-      } else if (/routine|dripping|not that urgent/i.test(trimmed)) {
-        setMaintenancePriority('routine')
-      }
-      if (/submit/i.test(trimmed)) {
-        if (!maintenancePriority) setMaintenancePriority('routine')
-        setMaintenanceSubmitted(true)
-        setInput('')
-        setMessages((prev) => [
-          ...prev,
-          { id: crypto.randomUUID(), role: 'user', content: trimmed },
-          {
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: 'Request submitted. Maintenance will follow up with next steps.',
-            source: 'scripted',
-          },
-        ])
-        setChips([])
-        return
-      }
-    }
+    // Maintenance side effects (triage UI); early return only for submit shortcut
+    if (applyMaintenanceSideEffects(trimmed)) return
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
       content: trimmed,
     }
+    const assistantId = crypto.randomUUID()
     setMessages((prev) => [...prev, userMsg])
     setInput('')
     setTyping(true)
@@ -164,21 +195,78 @@ export function GuideChat({ className }: GuideChatProps) {
       content: m.content,
     }))
 
-    const reply = await askGuide(scene, trimmed, history)
-    await delay(400 + Math.random() * 300)
-    setTyping(false)
-    setLastSource(reply.source)
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: reply.text,
-        source: reply.source,
+    const checklistState = {
+      photosDone,
+      householdDone,
+      autopayDone,
+      photoCount: photos.length,
+      householdCount: household.length,
+      completedCount,
+      totalCount,
+      maintenancePhase,
+    }
+
+    let sawToken = false
+
+    const reply = await askGuideStreaming(scene, trimmed, history, checklistState, {
+      onToken: (chunk) => {
+        if (!sawToken) {
+          sawToken = true
+          setTyping(false)
+          setStreaming(true)
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: assistantId,
+              role: 'assistant',
+              content: chunk,
+              source: 'live',
+            },
+          ])
+        } else {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId ? { ...m, content: m.content + chunk } : m,
+            ),
+          )
+        }
       },
-    ])
+    })
+
+    setTyping(false)
+    setStreaming(false)
+    setLastSource(reply.source)
+
+    if (reply.source === 'scripted') {
+      // Replace any partial live bubble (or add fresh) with scripted text
+      setMessages((prev) => {
+        const withoutPartial = prev.filter((m) => m.id !== assistantId)
+        return [
+          ...withoutPartial,
+          {
+            id: assistantId,
+            role: 'assistant',
+            content: reply.text,
+            source: 'scripted',
+          },
+        ]
+      })
+    } else if (!sawToken) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: assistantId,
+          role: 'assistant',
+          content: reply.text,
+          source: 'live',
+        },
+      ])
+    }
+
     if (reply.chips?.length) setChips(reply.chips)
   }
+
+  const busy = typing || booting || streaming
 
   return (
     <div
@@ -223,7 +311,7 @@ export function GuideChat({ className }: GuideChatProps) {
               </div>
             </div>
           ))}
-          {typing && (
+          {typing && !streaming && (
             <div className="flex gap-2">
               <GuideAvatar size="sm" />
               <div className="rounded-2xl rounded-bl-md bg-muted/80 px-3 py-2">
@@ -234,11 +322,13 @@ export function GuideChat({ className }: GuideChatProps) {
         </div>
       </div>
 
-      {chips.length > 0 && !typing && !booting && (
+      {chips.length > 0 && !busy && (
         <div className="flex shrink-0 flex-wrap gap-1.5 border-t border-border/50 px-3 py-2">
           {chips.map((chip) => {
             const isStart = /start checklist/i.test(chip)
-            const isMaint = /maintenance|show me maintenance/i.test(chip)
+            const isMaint =
+              /show me maintenance|submit a maintenance request/i.test(chip) &&
+              scene !== 'maintenance'
             if (isStart) {
               return (
                 <Button key={chip} asChild size="sm" variant="secondary" className="h-7 text-xs">
@@ -279,11 +369,11 @@ export function GuideChat({ className }: GuideChatProps) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask Guide anything…"
-          disabled={typing || booting}
+          disabled={busy}
           className="bg-background"
         />
-        <Button type="submit" size="icon" disabled={!input.trim() || typing || booting}>
-          {typing ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+        <Button type="submit" size="icon" disabled={!input.trim() || busy}>
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
         </Button>
       </form>
     </div>

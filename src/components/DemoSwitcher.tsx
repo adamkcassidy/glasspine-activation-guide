@@ -7,8 +7,10 @@ import { cn } from '@/lib/utils'
 const SCENES: { to: string; label: string; scene: GuideScene }[] = [
   { to: '/', label: 'Welcome', scene: 'welcome' },
   { to: '/checklist', label: 'Checklist', scene: 'checklist' },
-  { to: '/complete', label: 'Complete', scene: 'complete' },
+  { to: '/complete', label: 'Home', scene: 'complete' },
   { to: '/maintenance', label: 'Maintenance', scene: 'maintenance' },
+  { to: '/nudges', label: 'Nudges', scene: 'nudges' },
+  { to: '/measure', label: 'Measure', scene: 'measure' },
 ]
 
 export function DemoSwitcher() {
@@ -30,7 +32,7 @@ export function DemoSwitcher() {
       <div className="flex flex-wrap items-center justify-end gap-1.5">
         <nav
           aria-label="Demo scenes"
-          className="flex items-center gap-0.5 rounded-full border border-border/70 bg-card/90 p-0.5 text-[11px] shadow-sm backdrop-blur"
+          className="flex flex-wrap items-center justify-end gap-0.5 rounded-full border border-border/70 bg-card/90 p-0.5 text-[11px] shadow-sm backdrop-blur"
         >
           {SCENES.map((scene) => (
             <NavLink
@@ -43,7 +45,7 @@ export function DemoSwitcher() {
               }}
               className={({ isActive }) =>
                 cn(
-                  'rounded-full px-2.5 py-1 font-medium text-muted-foreground transition-colors',
+                  'rounded-full px-2 py-1 font-medium text-muted-foreground transition-colors',
                   isActive && 'bg-primary text-primary-foreground',
                 )
               }
