@@ -24,13 +24,20 @@ const COMING_SOON = [
 ] as const
 
 export function CompletePage() {
-  const { photos, household, allDone, autopay, autopayDone } = useChecklist()
+  const { photos, notificationsDone, allDone, autopay, autopayDone } = useChecklist()
   const photoCount = photos.length
-  const householdCount = household.length
-  const photoLabel =
-    photoCount > 0 ? ` (${photoCount} photo${photoCount === 1 ? '' : 's'})` : ''
-  const householdLabel =
-    householdCount > 0 ? `, household of ${householdCount + 1}` : ''
+  const parts: string[] = []
+  if (photoCount > 0) {
+    parts.push(`unit condition (${photoCount} photo${photoCount === 1 ? '' : 's'})`)
+  } else {
+    parts.push('unit condition')
+  }
+  if (notificationsDone) parts.push('notification preferences')
+  if (autopayDone) parts.push('autopay setup')
+  const recordList =
+    parts.length <= 1
+      ? parts[0] ?? 'move-in details'
+      : `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`
 
   return (
     <div className="space-y-6">
@@ -42,8 +49,7 @@ export function CompletePage() {
           Move-in record saved
         </h1>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Nice work, {RESIDENT.firstName}. Your move-in day unit condition{photoLabel}
-          {householdLabel}, and autopay setup
+          Nice work, {RESIDENT.firstName}. Your move-in day {recordList}
           {allDone ? ' are' : ' will be'} recorded for {RESIDENT.unit}.
         </p>
       </div>
@@ -61,7 +67,7 @@ export function CompletePage() {
               </p>
               {autopayDone && autopay ? (
                 <p className="mt-2 text-sm text-primary">
-                  Autopay on · {autopay.accountLabel} · drafts the {ordinal(autopay.draftDay)}
+                  Autopay on · we&apos;ll draft your rent on the 1st of each month
                 </p>
               ) : (
                 <Button asChild size="sm" className="mt-3" variant="secondary">
@@ -124,10 +130,4 @@ export function CompletePage() {
       </div>
     </div>
   )
-}
-
-function ordinal(n: number) {
-  const s = ['th', 'st', 'nd', 'rd']
-  const v = n % 100
-  return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`
 }

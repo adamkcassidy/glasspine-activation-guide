@@ -16,7 +16,7 @@ Open the URL Vite prints (usually `http://localhost:5173`). Without a live API, 
 | Route | Scene |
 | --- | --- |
 | `/` | Welcome + Guide intro |
-| `/checklist` | Photos, household, bank autopay |
+| `/checklist` | Photos, notifications, bank autopay |
 | `/complete` | Home — move-in record saved + action cards |
 | `/maintenance` | Guide-led triage → editable request or emergency handoff |
 | `/nudges` | Mocked email / SMS / push timeline |
@@ -52,7 +52,7 @@ npx vercel dev
 ## What’s mocked
 
 - Room photos = `/public/rooms/room-*.jpg` or placeholders
-- Autopay = choose a fake bank account + draft day
+- Autopay = mock Plaid-style bank connect (drafts on the 1st)
 - Maintenance submit / track link = UI only
 - Nudges = timeline frames only (no send infra)
 - Measure numbers = illustrative

@@ -12,7 +12,7 @@ export type ScriptedReply = {
 }
 
 const GENERIC_FALLBACK: ScriptedReply = {
-  text: "I'm not sure about that—your property manager can confirm. Meanwhile I can help with photos, household, autopay, or maintenance.",
+  text: "I'm not sure about that—your property manager can confirm. Meanwhile I can help with photos, notifications, autopay, or maintenance.",
   chips: ['Why photos first?', 'How does autopay work?', 'Submit a maintenance request'],
 }
 
@@ -31,16 +31,16 @@ const CHIP_REPLIES: Record<string, ScriptedReply> = {
     chips: ['Why photos first?', 'How does autopay work?'],
   },
   'Start checklist': {
-    text: 'Open the Move-In Checklist when you’re ready — photos first, then household and autopay.',
+    text: 'Open the Move-In Checklist when you’re ready — photos, notification opt-in, then autopay.',
     chips: ['Why photos first?'],
   },
-  'Who counts as household?': {
-    text: 'Add everyone living in the unit — partners, roommates, and dependents. That keeps lease records accurate and notices reaching the right people.',
+  'Why turn on notifications?': {
+    text: 'Opting into email, SMS, or push is how Glasspine can remind you if a checklist step is still open. Without that opt-in, later nudges have no channel to reach you.',
     chips: ['Why photos first?', 'How does autopay work?'],
   },
   'How does autopay work?': {
-    text: 'Autopay drafts rent from your linked bank account on your chosen day so you can avoid late fees. Rent is due on the 1st with a 5-day grace period. You can pause or update anytime in Payments.',
-    chips: ['Why photos first?', 'Who counts as household?'],
+    text: 'Connect your bank once — we’ll draft rent on the 1st each month (your lease due date), with a 5-day grace period. You can pause or update anytime in Payments.',
+    chips: ['Why photos first?', 'Why turn on notifications?'],
   },
   'Show maintenance tip': {
     text: "When something breaks, describe it here — I'll help classify emergency vs routine and gather location, photos, and entry permission. True emergencies: call 555-0142 first.",
@@ -106,12 +106,12 @@ const INTENT_PATTERNS: { intent: string; patterns: RegExp[] }[] = [
     patterns: [/how.*photo/i, /what.*take/i, /which.*room/i, /what rooms/i, /tips?/i],
   },
   {
-    intent: 'household',
-    patterns: [/household/i, /roommate/i, /partner/i, /add.*(member|person)/i, /who.*live/i, /who counts/i],
+    intent: 'notifications',
+    patterns: [/notification/i, /opt.?in/i, /sms/i, /push/i, /remind/i, /alert/i],
   },
   {
     intent: 'autopay',
-    patterns: [/autopay/i, /auto.?pay/i, /payment/i, /rent/i, /bank/i, /draft/i, /account/i, /grace/i],
+    patterns: [/autopay/i, /auto.?pay/i, /payment/i, /rent/i, /bank/i, /draft/i, /account/i, /grace/i, /plaid/i],
   },
   {
     intent: 'emergency',
@@ -131,7 +131,7 @@ const INTENT_PATTERNS: { intent: string; patterns: RegExp[] }[] = [
   },
   {
     intent: 'nudges',
-    patterns: [/nudge/i, /sms/i, /email/i, /push/i, /reminder/i, /notification/i],
+    patterns: [/nudge/i, /email reminder/i],
   },
   {
     intent: 'measure',
@@ -152,15 +152,15 @@ const INTENT_REPLIES: Record<GuideScene, Record<string, ScriptedReply>> = {
   checklist: {
     why_photos: CHIP_REPLIES['Why photos first?'],
     how_photos: CHIP_REPLIES['What rooms should I cover?'],
-    household: CHIP_REPLIES['Who counts as household?'],
+    notifications: CHIP_REPLIES['Why turn on notifications?'],
     autopay: CHIP_REPLIES['How does autopay work?'],
     lease: {
       text: 'Quiet hours are 10pm–7am, and one small pet is allowed with approval. For anything else, ask your property manager — I won’t guess at policy.',
       chips: ['Why photos first?', 'How does autopay work?'],
     },
     default: {
-      text: "You're on the Move-In Checklist. Finish unit photos, household, and autopay — then I'll confirm your move-in record is saved.",
-      chips: ['Why photos first?', 'Who counts as household?', 'How does autopay work?'],
+      text: "You're on the Move-In Checklist. Finish unit photos, turn on notifications, and set up autopay — then I'll confirm your move-in record is saved.",
+      chips: ['Why photos first?', 'Why turn on notifications?', 'How does autopay work?'],
     },
   },
   complete: {
@@ -190,21 +190,22 @@ const INTENT_REPLIES: Record<GuideScene, Record<string, ScriptedReply>> = {
   },
   nudges: {
     nudges: {
-      text: 'These frames are mocked reminders — email on move-in day, then SMS/push if photos or other steps are still open. They stop once the item is done. Nothing is actually sent in this demo.',
-      chips: ['Why photos first?', 'Start checklist'],
+      text: 'These frames are mocked reminders — they only go out if Jordan opted into notifications on the checklist. Email on move-in day, then SMS/push if steps are still open. They stop once the item is done. Nothing is actually sent here.',
+      chips: ['Why turn on notifications?', 'Why photos first?'],
     },
+    notifications: CHIP_REPLIES['Why turn on notifications?'],
     default: {
-      text: "You're viewing the nudge timeline. It’s a mocked story of how we’d remind Jordan about unfinished move-in steps — labeled mocked, no real sends.",
-      chips: ['Why photos first?', 'Start checklist'],
+      text: "You're viewing the nudge timeline. It’s a mocked story of how we’d remind Jordan about unfinished move-in steps — only reachable after notification opt-in. Labeled mocked, no real sends.",
+      chips: ['Why turn on notifications?', 'Start checklist'],
     },
   },
   measure: {
     measure: {
-      text: 'Activation here means finishing the checklist within 7 days of lease start. The funnel and cohort numbers on this page are illustrative for the design exercise.',
+      text: 'Activation here means finishing photos, notifications, and autopay within 7 days of lease start. The funnel and cohort numbers on this page are illustrative for the design exercise.',
       chips: ['Why photos first?'],
     },
     default: {
-      text: 'This Measure panel is static — funnel, Guide-led vs holdout, downstream metrics, and a ship/stop rule. Ask if you want a plain-language walkthrough.',
+      text: 'This Measure panel is static — resident quotes, funnel, Guide-led vs holdout, downstream metrics, and a ship/stop rule. Ask if you want a plain-language walkthrough.',
       chips: ['Why photos first?'],
     },
   },
@@ -232,7 +233,7 @@ export function getSuggestedChips(scene: GuideScene): string[] {
 
 export const WELCOME_SEQUENCE = [
   `Welcome home, Jordan — I'm Guide, your Glasspine assistant for Oak Street Residences.`,
-  `I've put together a short Move-In Checklist for Apt 4B. We'll document your unit's condition, add household members, and set up autopay.`,
+  `I've put together a short Move-In Checklist for Apt 4B. We'll document your unit's condition, turn on notifications, and set up autopay.`,
   `Ready to start whenever you are.`,
 ] as const
 
@@ -246,7 +247,7 @@ export const MAINTENANCE_PROACTIVE = [
 ] as const
 
 export const NUDGES_SEED_MESSAGES = [
-  `This timeline shows mocked nudges we’d send if move-in steps stall — email, SMS, and push. Nothing is actually sent here.`,
+  `This timeline shows mocked nudges we’d send if move-in steps stall — email, SMS, and push. They only reach residents who opted into notifications on the checklist. Nothing is actually sent here.`,
 ] as const
 
 export const MEASURE_SEED_MESSAGES = [

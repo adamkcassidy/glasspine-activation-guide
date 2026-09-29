@@ -9,10 +9,9 @@ type Scene = 'welcome' | 'checklist' | 'complete' | 'maintenance' | 'nudges' | '
 
 type ChecklistSnapshot = {
   photosDone?: boolean
-  householdDone?: boolean
+  notificationsDone?: boolean
   autopayDone?: boolean
   photoCount?: number
-  householdCount?: number
   completedCount?: number
   totalCount?: number
   maintenancePhase?: string
@@ -20,22 +19,22 @@ type ChecklistSnapshot = {
 
 const SCENE_CONTEXT: Record<Scene, string> = {
   welcome:
-    'The resident is on move-in day. Introduce the Move-In Checklist: unit-condition photos, household members, and autopay.',
+    'The resident is on move-in day. Introduce the Move-In Checklist: unit-condition photos, notification opt-in, and autopay.',
   checklist:
-    'The resident is working through the Move-In Checklist. Answer briefly and encourage completing photos, household, and autopay.',
+    'The resident is working through the Move-In Checklist. Answer briefly and encourage completing photos, notifications, and autopay.',
   complete:
     'The resident finished the checklist. Their move-in record is saved. They are on Home — rent, maintenance, and coming-soon actions.',
   maintenance:
     'The resident may have a maintenance issue. Ask 1–2 clarifying questions, triage emergency vs routine. True emergencies: direct them to call 555-0142 first. For routine, help them complete a clear request.',
   nudges:
-    'The resident is viewing mocked activation nudges (email/SMS/push). Explain the intent of timely reminders; do not claim messages were actually sent.',
+    'The resident is viewing mocked activation nudges (email/SMS/push). These only reach residents who opted into notifications on the checklist. Explain the intent of timely reminders; do not claim messages were actually sent.',
   measure:
     'The resident (or reviewer) is viewing a static measurement panel about activation. Keep answers high-level; numbers on screen are illustrative.',
 }
 
 function buildSystemPrompt(scene: Scene, checklist?: ChecklistSnapshot) {
   const checklistLine = checklist
-    ? `Checklist state: photos ${checklist.photosDone ? 'done' : 'incomplete'} (${checklist.photoCount ?? 0}), household ${checklist.householdDone ? 'done' : 'incomplete'} (${checklist.householdCount ?? 0} members), autopay ${checklist.autopayDone ? 'done' : 'incomplete'}; ${checklist.completedCount ?? 0}/${checklist.totalCount ?? 3} complete.${checklist.maintenancePhase ? ` Maintenance phase: ${checklist.maintenancePhase}.` : ''}`
+    ? `Checklist state: photos ${checklist.photosDone ? 'done' : 'incomplete'} (${checklist.photoCount ?? 0}), notifications ${checklist.notificationsDone ? 'done' : 'incomplete'}, autopay ${checklist.autopayDone ? 'done' : 'incomplete'}; ${checklist.completedCount ?? 0}/${checklist.totalCount ?? 3} complete.${checklist.maintenancePhase ? ` Maintenance phase: ${checklist.maintenancePhase}.` : ''}`
     : 'Checklist state: unknown.'
 
   return `You are Glasspine Guide, a friendly, concise AI assistant in the Glasspine Resident app for Oak Street Residences.

@@ -14,7 +14,7 @@ import {
   NUDGES_SEED_MESSAGES,
   WELCOME_SEQUENCE,
 } from '@/lib/guide-scripts'
-import { BANK_ACCOUNTS, ROOM_LABELS } from '@/lib/resident'
+import { RENT_DUE_DAY, ROOM_LABELS } from '@/lib/resident'
 
 export type UnitPhoto = {
   id: string
@@ -23,16 +23,17 @@ export type UnitPhoto = {
   takenAt: string
 }
 
-export type HouseholdMember = {
-  id: string
-  name: string
-  relationship: string
+export type NotificationPrefs = {
+  email: boolean
+  sms: boolean
+  push: boolean
 }
 
 export type AutopayInfo = {
-  accountId: string
+  connected: boolean
+  /** Always the lease due day (1st) — not chosen by the resident. */
+  draftDay: typeof RENT_DUE_DAY
   accountLabel: string
-  draftDay: number
 }
 
 export type ChatMessage = {
@@ -60,10 +61,10 @@ export type MaintenanceDraft = {
 
 export type ChecklistState = {
   photos: UnitPhoto[]
-  household: HouseholdMember[]
+  notifications: NotificationPrefs
   autopay: AutopayInfo | null
   photosDone: boolean
-  householdDone: boolean
+  notificationsDone: boolean
   autopayDone: boolean
   completedCount: number
   totalCount: number
@@ -71,10 +72,9 @@ export type ChecklistState = {
   addRoomPhotos: () => void
   removePhoto: (id: string) => void
   completePhotos: () => void
-  addHouseholdMember: (name: string, relationship: string) => void
-  removeHouseholdMember: (id: string) => void
-  completeHousehold: () => void
-  completeAutopay: (info: AutopayInfo) => void
+  setNotificationPrefs: (prefs: NotificationPrefs) => void
+  completeNotifications: () => void
+  completeAutopay: () => void
   // Maintenance
   maintenancePhase: MaintenancePhase
   maintenanceDraft: MaintenanceDraft
@@ -102,6 +102,12 @@ export type ChecklistState = {
 
 const ChecklistContext = createContext<ChecklistState | null>(null)
 
+const EMPTY_NOTIFICATIONS: NotificationPrefs = {
+  email: false,
+  sms: false,
+  push: false,
+}
+
 const DEFAULT_DRAFT: MaintenanceDraft = {
   issue: '',
   location: 'Apt 4B kitchen',
@@ -120,16 +126,15 @@ function buildRoomPhotos(takenAt = new Date().toISOString()): UnitPhoto[] {
   }))
 }
 
-function seedHousehold(): HouseholdMember[] {
-  return [{ id: crypto.randomUUID(), name: 'Alex Hale', relationship: 'Spouse/Partner' }]
+function seedNotifications(): NotificationPrefs {
+  return { email: true, sms: true, push: true }
 }
 
 function seedAutopay(): AutopayInfo {
-  const account = BANK_ACCOUNTS[0]
   return {
-    accountId: account.id,
-    accountLabel: account.label,
-    draftDay: 1,
+    connected: true,
+    draftDay: RENT_DUE_DAY,
+    accountLabel: 'Bank account connected',
   }
 }
 
@@ -140,8 +145,8 @@ function emptyDraft(): MaintenanceDraft {
 export function ChecklistProvider({ children }: { children: ReactNode }) {
   const [photos, setPhotos] = useState<UnitPhoto[]>([])
   const [photosDone, setPhotosDone] = useState(false)
-  const [household, setHousehold] = useState<HouseholdMember[]>([])
-  const [householdDone, setHouseholdDone] = useState(false)
+  const [notifications, setNotifications] = useState<NotificationPrefs>(EMPTY_NOTIFICATIONS)
+  const [notificationsDone, setNotificationsDone] = useState(false)
   const [autopay, setAutopay] = useState<AutopayInfo | null>(null)
 
   const [maintenancePhase, setMaintenancePhase] = useState<MaintenancePhase>('listening')
@@ -167,24 +172,17 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     setPhotosDone(true)
   }, [])
 
-  const addHouseholdMember = useCallback((name: string, relationship: string) => {
-    setHousehold((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), name: name.trim(), relationship: relationship.trim() },
-    ])
+  const setNotificationPrefs = useCallback((prefs: NotificationPrefs) => {
+    setNotifications(prefs)
+    setNotificationsDone(false)
   }, [])
 
-  const removeHouseholdMember = useCallback((id: string) => {
-    setHousehold((prev) => prev.filter((m) => m.id !== id))
-    setHouseholdDone(false)
+  const completeNotifications = useCallback(() => {
+    setNotificationsDone(true)
   }, [])
 
-  const completeHousehold = useCallback(() => {
-    setHouseholdDone(true)
-  }, [])
-
-  const completeAutopay = useCallback((info: AutopayInfo) => {
-    setAutopay(info)
+  const completeAutopay = useCallback(() => {
+    setAutopay(seedAutopay())
   }, [])
 
   const updateMaintenanceDraft = useCallback((patch: Partial<MaintenanceDraft>) => {
@@ -234,8 +232,8 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
   const resetDemo = useCallback(() => {
     setPhotos([])
     setPhotosDone(false)
-    setHousehold([])
-    setHouseholdDone(false)
+    setNotifications(EMPTY_NOTIFICATIONS)
+    setNotificationsDone(false)
     setAutopay(null)
     setMaintenancePhase('listening')
     setMaintenanceDraft(emptyDraft())
@@ -258,26 +256,26 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       case 'welcome':
         setPhotos([])
         setPhotosDone(false)
-        setHousehold([])
-        setHouseholdDone(false)
+        setNotifications(EMPTY_NOTIFICATIONS)
+        setNotificationsDone(false)
         setAutopay(null)
         setPendingBoot([...WELCOME_SEQUENCE])
         break
       case 'checklist':
         setPhotos([])
         setPhotosDone(false)
-        setHousehold([])
-        setHouseholdDone(false)
+        setNotifications(EMPTY_NOTIFICATIONS)
+        setNotificationsDone(false)
         setAutopay(null)
         setPendingBoot([
-          "I'm here while you work through the checklist. Ask about photos, household, or autopay anytime.",
+          "I'm here while you work through the checklist. Ask about photos, notifications, or autopay anytime.",
         ])
         break
       case 'complete': {
         setPhotos(buildRoomPhotos())
         setPhotosDone(true)
-        setHousehold(seedHousehold())
-        setHouseholdDone(true)
+        setNotifications(seedNotifications())
+        setNotificationsDone(true)
         setAutopay(seedAutopay())
         setPendingBoot([...COMPLETE_SEED_MESSAGES])
         break
@@ -285,8 +283,8 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       case 'maintenance':
         setPhotos(buildRoomPhotos())
         setPhotosDone(true)
-        setHousehold(seedHousehold())
-        setHouseholdDone(true)
+        setNotifications(seedNotifications())
+        setNotificationsDone(true)
         setAutopay(seedAutopay())
         setMaintenanceDraft({
           ...emptyDraft(),
@@ -298,18 +296,19 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
         setPendingBoot([...MAINTENANCE_PROACTIVE])
         break
       case 'nudges':
+        // Opted in so the nudge sequence can reach them; photos still incomplete
         setPhotos([])
         setPhotosDone(false)
-        setHousehold(seedHousehold())
-        setHouseholdDone(true)
+        setNotifications(seedNotifications())
+        setNotificationsDone(true)
         setAutopay(null)
         setPendingBoot([...NUDGES_SEED_MESSAGES])
         break
       case 'measure':
         setPhotos(buildRoomPhotos())
         setPhotosDone(true)
-        setHousehold(seedHousehold())
-        setHouseholdDone(true)
+        setNotifications(seedNotifications())
+        setNotificationsDone(true)
         setAutopay(seedAutopay())
         setPendingBoot([...MEASURE_SEED_MESSAGES])
         break
@@ -317,17 +316,17 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const autopayDone = autopay !== null
-  const completedCount = [photosDone, householdDone, autopayDone].filter(Boolean).length
+  const completedCount = [photosDone, notificationsDone, autopayDone].filter(Boolean).length
   const totalCount = 3
   const allDone = completedCount === totalCount
 
   const value = useMemo(
     () => ({
       photos,
-      household,
+      notifications,
       autopay,
       photosDone,
-      householdDone,
+      notificationsDone,
       autopayDone,
       completedCount,
       totalCount,
@@ -335,9 +334,8 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       addRoomPhotos,
       removePhoto,
       completePhotos,
-      addHouseholdMember,
-      removeHouseholdMember,
-      completeHousehold,
+      setNotificationPrefs,
+      completeNotifications,
       completeAutopay,
       maintenancePhase,
       maintenanceDraft,
@@ -363,19 +361,18 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     }),
     [
       photos,
-      household,
+      notifications,
       autopay,
       photosDone,
-      householdDone,
+      notificationsDone,
       autopayDone,
       completedCount,
       allDone,
       addRoomPhotos,
       removePhoto,
       completePhotos,
-      addHouseholdMember,
-      removeHouseholdMember,
-      completeHousehold,
+      setNotificationPrefs,
+      completeNotifications,
       completeAutopay,
       maintenancePhase,
       maintenanceDraft,

@@ -1,16 +1,16 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Building2, Camera, Users } from 'lucide-react'
+import { Bell, Building2, Camera } from 'lucide-react'
 import { AutopaySetup } from '@/components/checklist/AutopaySetup'
 import { ChecklistItem } from '@/components/checklist/ChecklistItem'
-import { HouseholdForm } from '@/components/checklist/HouseholdForm'
+import { NotificationSetup } from '@/components/checklist/NotificationSetup'
 import { PhotoUpload } from '@/components/checklist/PhotoUpload'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { useChecklist } from '@/lib/checklist-state'
 
 export function ChecklistPage() {
-  const { completedCount, totalCount, allDone, photosDone, householdDone, autopayDone } =
+  const { completedCount, totalCount, allDone, photosDone, notificationsDone, autopayDone } =
     useChecklist()
   const navigate = useNavigate()
   const progress = (completedCount / totalCount) * 100
@@ -29,7 +29,7 @@ export function ChecklistPage() {
           Move-In Checklist
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {completedCount} of {totalCount} complete — start with photos on move-in day
+          {completedCount} of {totalCount} complete — photos, notifications, then autopay
         </p>
       </div>
 
@@ -45,17 +45,17 @@ export function ChecklistPage() {
       </ChecklistItem>
 
       <ChecklistItem
-        title="Add household members"
-        description="Who else lives in Apt 4B?"
-        done={householdDone}
-        icon={Users}
+        title="Turn on notifications"
+        description="Opt into email, SMS, and/or push so reminders can reach you"
+        done={notificationsDone}
+        icon={Bell}
       >
-        <HouseholdForm />
+        <NotificationSetup />
       </ChecklistItem>
 
       <ChecklistItem
         title="Set up autopay"
-        description="Link a bank account and choose a draft day"
+        description="Connect your bank — rent drafts on the 1st"
         done={autopayDone}
         icon={Building2}
       >

@@ -2,10 +2,9 @@ import { getScriptedReply, type GuideScene, type ScriptedReply } from './guide-s
 
 export type ChecklistSnapshot = {
   photosDone: boolean
-  householdDone: boolean
+  notificationsDone: boolean
   autopayDone: boolean
   photoCount: number
-  householdCount: number
   completedCount: number
   totalCount: number
   maintenancePhase?: string

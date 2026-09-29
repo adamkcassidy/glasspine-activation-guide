@@ -60,10 +60,9 @@ export function GuideChat({ className }: GuideChatProps) {
     chips,
     pendingBoot,
     photosDone,
-    householdDone,
+    notificationsDone,
     autopayDone,
     photos,
-    household,
     completedCount,
     totalCount,
     maintenancePhase,
@@ -195,10 +194,9 @@ export function GuideChat({ className }: GuideChatProps) {
 
     const checklistState = {
       photosDone,
-      householdDone,
+      notificationsDone,
       autopayDone,
       photoCount: photos.length,
-      householdCount: household.length,
       completedCount,
       totalCount,
       maintenancePhase,

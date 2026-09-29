@@ -17,9 +17,5 @@ export const ROOM_LABELS = [
   'Balcony',
 ] as const
 
-export const BANK_ACCOUNTS = [
-  { id: 'chk-4821', label: 'Checking ··4821', bank: 'First Oak Bank' },
-  { id: 'sav-0193', label: 'Savings ··0193', bank: 'First Oak Bank' },
-] as const
-
-export const DRAFT_DAYS = [1, 5, 15] as const
+/** Lease rent due date — autopay drafts on this day (not a resident choice). */
+export const RENT_DUE_DAY = 1 as const
