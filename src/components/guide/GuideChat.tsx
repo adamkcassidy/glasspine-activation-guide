@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Loader2, Send, Sparkles } from 'lucide-react'
-import { askGuideStreaming, delay } from '@/lib/guide-client'
+import { askGuide, delay } from '@/lib/guide-client'
 import { getSuggestedChips, type GuideScene } from '@/lib/guide-scripts'
 import { useChecklist, type ChatMessage } from '@/lib/checklist-state'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -78,7 +78,6 @@ export function GuideChat({ className }: GuideChatProps) {
   } = useChecklist()
 
   const [typing, setTyping] = useState(false)
-  const [streaming, setStreaming] = useState(false)
   const [booting, setBooting] = useState(false)
   const [input, setInput] = useState('')
   const listRef = useRef<HTMLDivElement>(null)
@@ -128,7 +127,7 @@ export function GuideChat({ className }: GuideChatProps) {
     const el = listRef.current
     if (!el) return
     el.scrollTop = el.scrollHeight
-  }, [messages, typing, streaming])
+  }, [messages, typing])
 
   function applyMaintenanceSideEffects(trimmed: string) {
     if (scene !== 'maintenance') return false
@@ -175,7 +174,7 @@ export function GuideChat({ className }: GuideChatProps) {
 
   async function send(text: string) {
     const trimmed = text.trim()
-    if (!trimmed || typing || booting || streaming) return
+    if (!trimmed || typing || booting) return
 
     // Maintenance side effects (triage UI); early return only for submit shortcut
     if (applyMaintenanceSideEffects(trimmed)) return
@@ -185,7 +184,6 @@ export function GuideChat({ className }: GuideChatProps) {
       role: 'user',
       content: trimmed,
     }
-    const assistantId = crypto.randomUUID()
     setMessages((prev) => [...prev, userMsg])
     setInput('')
     setTyping(true)
@@ -206,67 +204,22 @@ export function GuideChat({ className }: GuideChatProps) {
       maintenancePhase,
     }
 
-    let sawToken = false
-
-    const reply = await askGuideStreaming(scene, trimmed, history, checklistState, {
-      onToken: (chunk) => {
-        if (!sawToken) {
-          sawToken = true
-          setTyping(false)
-          setStreaming(true)
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: assistantId,
-              role: 'assistant',
-              content: chunk,
-              source: 'live',
-            },
-          ])
-        } else {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, content: m.content + chunk } : m,
-            ),
-          )
-        }
-      },
-    })
-
+    const reply = await askGuide(scene, trimmed, history, checklistState)
     setTyping(false)
-    setStreaming(false)
     setLastSource(reply.source)
-
-    if (reply.source === 'scripted') {
-      // Replace any partial live bubble (or add fresh) with scripted text
-      setMessages((prev) => {
-        const withoutPartial = prev.filter((m) => m.id !== assistantId)
-        return [
-          ...withoutPartial,
-          {
-            id: assistantId,
-            role: 'assistant',
-            content: reply.text,
-            source: 'scripted',
-          },
-        ]
-      })
-    } else if (!sawToken) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: assistantId,
-          role: 'assistant',
-          content: reply.text,
-          source: 'live',
-        },
-      ])
-    }
-
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: reply.text,
+        source: reply.source,
+      },
+    ])
     if (reply.chips?.length) setChips(reply.chips)
   }
 
-  const busy = typing || booting || streaming
+  const busy = typing || booting
 
   return (
     <div
@@ -311,7 +264,7 @@ export function GuideChat({ className }: GuideChatProps) {
               </div>
             </div>
           ))}
-          {typing && !streaming && (
+          {typing && (
             <div className="flex gap-2">
               <GuideAvatar size="sm" />
               <div className="rounded-2xl rounded-bl-md bg-muted/80 px-3 py-2">

@@ -17,20 +17,15 @@ export type GuideResponse = ScriptedReply & {
 
 const LIVE_TIMEOUT_MS = 8000
 
-export type StreamGuideHandlers = {
-  onToken: (chunk: string) => void
-}
-
 /**
- * Streams a live Guide reply. Calls onToken for each text chunk.
- * Falls back to scripted replies on timeout, error, or missing key (503).
+ * Asks Guide via /api/guide (JSON). Falls back to scripted replies on
+ * timeout, error, empty body, or missing key (503).
  */
-export async function askGuideStreaming(
+export async function askGuide(
   scene: GuideScene,
   message: string,
   history: { role: 'user' | 'assistant'; content: string }[] = [],
   checklistState?: ChecklistSnapshot,
-  handlers?: StreamGuideHandlers,
 ): Promise<GuideResponse> {
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), LIVE_TIMEOUT_MS)
@@ -44,30 +39,17 @@ export async function askGuideStreaming(
     })
 
     if (!res.ok) throw new Error(`Guide API ${res.status}`)
-    if (!res.body) throw new Error('No response body')
 
-    const reader = res.body.getReader()
-    const decoder = new TextDecoder()
-    let text = ''
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      const chunk = decoder.decode(value, { stream: true })
-      if (!chunk) continue
-      text += chunk
-      handlers?.onToken(chunk)
-    }
-
-    const finalText = text.trim()
-    if (!finalText) throw new Error('Empty Guide response')
+    const data = (await res.json()) as { text?: string }
+    if (!data.text?.trim()) throw new Error('Empty Guide response')
 
     return {
-      text: finalText,
+      text: data.text.trim(),
       chips: getScriptedReply(scene, message).chips,
       source: 'live',
     }
-  } catch {
+  } catch (err) {
+    console.error('[guide-client] askGuide failed', err)
     const fallback = getScriptedReply(scene, message)
     return { ...fallback, source: 'scripted' }
   } finally {
@@ -75,14 +57,15 @@ export async function askGuideStreaming(
   }
 }
 
-/** Non-streaming helper (scripts / tests). Prefer askGuideStreaming in the UI. */
-export async function askGuide(
+/** @deprecated Use askGuide — streaming removed for reliability on Vercel Node. */
+export async function askGuideStreaming(
   scene: GuideScene,
   message: string,
   history: { role: 'user' | 'assistant'; content: string }[] = [],
   checklistState?: ChecklistSnapshot,
+  _handlers?: { onToken: (chunk: string) => void },
 ): Promise<GuideResponse> {
-  return askGuideStreaming(scene, message, history, checklistState)
+  return askGuide(scene, message, history, checklistState)
 }
 
 export function delay(ms: number) {

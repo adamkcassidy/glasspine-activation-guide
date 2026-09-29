@@ -1,5 +1,5 @@
 import { google } from '@ai-sdk/google'
-import { pipeTextStreamToResponse, streamText, toTextStream } from 'ai'
+import { generateText } from 'ai'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 type Scene = 'welcome' | 'checklist' | 'complete' | 'maintenance' | 'nudges' | 'measure'
@@ -85,20 +85,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .map((m) => `${m.role === 'user' ? 'Resident' : 'Guide'}: ${m.content}`)
       .join('\n')
 
-    const result = streamText({
+    console.log('[guide] calling generateText', {
+      scene,
+      messageLen: message.trim().length,
+      historyLen: history?.length ?? 0,
+    })
+
+    const { text } = await generateText({
       model: google('gemini-2.5-flash'),
       system: buildSystemPrompt(scene, checklistState),
       prompt: `${prior ? `Conversation so far:\n${prior}\n\n` : ''}Resident: ${message}\nGuide:`,
     })
 
-    await pipeTextStreamToResponse({
-      response: res,
-      stream: toTextStream({ stream: result.stream }),
+    console.log('[guide] generateText done', {
+      textLen: text?.length ?? 0,
+      preview: text?.slice(0, 80) ?? '',
     })
-  } catch (error) {
-    console.error('Guide API error', error)
-    if (!res.headersSent) {
-      return res.status(502).json({ error: 'Model call failed' })
+
+    if (!text?.trim()) {
+      return res.status(502).json({ error: 'Empty model response' })
     }
+
+    return res.status(200).json({ text: text.trim() })
+  } catch (error) {
+    console.error('[guide] Guide API error', error)
+    return res.status(502).json({ error: 'Model call failed' })
   }
 }
