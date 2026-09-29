@@ -27,7 +27,7 @@ export function ChecklistItem({
         className,
       )}
     >
-      <div className="mb-3 flex items-start gap-3">
+      <div className="flex items-start gap-3">
         <div
           className={cn(
             'flex size-10 shrink-0 items-center justify-center rounded-full',
@@ -38,12 +38,14 @@ export function ChecklistItem({
         >
           {done ? <Check className="size-4" /> : <Icon className="size-4" />}
         </div>
-        <div>
-          <h3 className="font-medium leading-tight">{title}</h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+        <div className="min-w-0 flex-1 space-y-3">
+          <div>
+            <h3 className="font-medium leading-tight">{title}</h3>
+            <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+          </div>
+          {children}
         </div>
       </div>
-      {children}
     </section>
   )
 }

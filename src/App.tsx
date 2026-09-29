@@ -3,6 +3,7 @@ import { AppShell } from '@/components/AppShell'
 import { ChecklistProvider } from '@/lib/checklist-state'
 import { ChecklistPage } from '@/pages/ChecklistPage'
 import { CompletePage } from '@/pages/CompletePage'
+import { ContactPage } from '@/pages/ContactPage'
 import { MaintenancePage } from '@/pages/MaintenancePage'
 import { MeasurePage } from '@/pages/MeasurePage'
 import { NudgesPage } from '@/pages/NudgesPage'
@@ -18,6 +19,7 @@ export default function App() {
             <Route path="/complete" element={<Navigate to="/" replace />} />
             <Route path="/checklist" element={<ChecklistPage />} />
             <Route path="/maintenance" element={<MaintenancePage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="/nudges" element={<NudgesPage />} />
             <Route path="/measure" element={<MeasurePage />} />
             <Route path="/write-up" element={<WriteUpPage />} />

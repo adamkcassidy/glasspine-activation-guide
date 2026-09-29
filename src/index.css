@@ -206,11 +206,13 @@
 .confetti-piece {
   position: absolute;
   left: 50%;
-  top: 42%;
+  top: 50%;
   width: 5px;
   height: 7px;
   border-radius: 1px;
   opacity: 0;
+  margin-left: -2.5px;
+  margin-top: -3.5px;
   animation: confetti-burst 1.4s ease-out forwards;
 }
 

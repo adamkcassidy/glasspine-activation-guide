@@ -5,7 +5,6 @@ import { GuideDock } from '@/components/guide/GuideDock'
 import { MetaBar } from '@/components/MetaBar'
 import { PineMark } from '@/components/PineMark'
 import { useChecklist } from '@/lib/checklist-state'
-import { RESIDENT } from '@/lib/resident'
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation()
@@ -21,16 +20,11 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="mx-auto flex w-full max-w-[960px] flex-1 flex-col px-4 pt-4 sm:px-6">
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <Link to="/" className="flex items-center gap-3">
-            <PineMark />
-            <div className="leading-tight">
-              <p className="font-serif text-lg font-semibold tracking-tight text-foreground">
-                Glasspine Resident
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {RESIDENT.fullName} · {RESIDENT.unit} · {RESIDENT.community}
-              </p>
-            </div>
+          <Link to="/" className="flex items-center gap-2.5">
+            <PineMark className="size-9 sm:size-10" />
+            <p className="font-serif text-xl font-semibold tracking-tight text-foreground sm:text-[1.35rem]">
+              Glasspine Resident
+            </p>
           </Link>
           <DemoSwitcher />
         </header>

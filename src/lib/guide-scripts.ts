@@ -43,7 +43,7 @@ const CHIP_REPLIES: Record<string, ScriptedReply> = {
     chips: ['Why photos first?', 'Why turn on notifications?'],
   },
   'Show maintenance tip': {
-    text: "When something breaks, describe it in chat — I'll classify emergency vs routine and submit a clear request for you. True emergencies: call 555-0142 first.",
+    text: "When something breaks, describe it in chat — I'll classify emergency vs routine and submit a clear request for you. True emergencies: call (415) 555-0142 first.",
     chips: ['Show me maintenance', 'What counts as emergency?'],
   },
   'Show me maintenance': {
@@ -63,7 +63,7 @@ const CHIP_REPLIES: Record<string, ScriptedReply> = {
     chips: ["It's an emergency", 'Routine — sink is dripping'],
   },
   "It's an emergency": {
-    text: 'If there’s active flooding, gas smell, fire, no heat in winter, or sparking outlets, call 555-0142 right away. Don’t wait on a work-order form.',
+    text: 'If there’s active flooding, gas smell, fire, no heat in winter, or sparking outlets, call (415) 555-0142 right away. Don’t wait on a work-order form.',
     chips: ["It's not that urgent", 'What counts as emergency?'],
   },
   'Routine — sink is dripping': {
@@ -104,11 +104,11 @@ const CHIP_REPLIES: Record<string, ScriptedReply> = {
     chips: ["It's an emergency", 'Routine — sink is dripping'],
   },
   'What counts as emergency?': {
-    text: 'Call 555-0142 first for gas smell, fire, active flooding, no heat in freezing weather, or sparking outlets. Everything else is usually routine and I can file it here.',
+    text: 'Call (415) 555-0142 first for gas smell, fire, active flooding, no heat in freezing weather, or sparking outlets. Everything else is usually routine and I can file it here.',
     chips: ['Kitchen faucet dripping', 'Submit a maintenance request'],
   },
   'Submit as emergency': {
-    text: 'For a true emergency, call 555-0142 now. I won’t file a normal work order until you’re safe and the on-call line has been notified.',
+    text: 'For a true emergency, call (415) 555-0142 now. I won’t file a normal work order until you’re safe and the on-call line has been notified.',
     chips: ["It's not that urgent"],
   },
   'Submit a request': {
@@ -116,7 +116,7 @@ const CHIP_REPLIES: Record<string, ScriptedReply> = {
     chips: ['Kitchen faucet dripping', 'What counts as emergency?'],
   },
   'Gas smell / emergency': {
-    text: 'Leave the unit if it feels unsafe and call 555-0142 immediately. Don’t wait on a work-order form for gas, fire, flooding, or sparking outlets.',
+    text: 'Leave the unit if it feels unsafe and call (415) 555-0142 immediately. Don’t wait on a work-order form for gas, fire, flooding, or sparking outlets.',
     chips: ["It's not that urgent"],
   },
 }
@@ -140,7 +140,7 @@ const INTENT_PATTERNS: { intent: string; patterns: RegExp[] }[] = [
   },
   {
     intent: 'emergency',
-    patterns: [/emergency/i, /flood/i, /gas/i, /fire/i, /no heat/i, /spark/i, /smoke/i, /555-0142/i],
+    patterns: [/emergency/i, /flood/i, /gas/i, /fire/i, /no heat/i, /spark/i, /smoke/i, /\(415\) 555-0142/i],
   },
   {
     intent: 'maintenance',
@@ -272,12 +272,12 @@ export const COMPLETE_SEED_MESSAGES = [
 
 export const MAINTENANCE_PROACTIVE = [
   `Hey Jordan — looks like something might need attention in Apt 4B.`,
-  `Tell me what's going on (or tap a chip). For gas, fire, flooding, or sparking outlets, call 555-0142 first — I'll help with everything else right here.`,
+  `Tell me what's going on (or tap a chip). For gas, fire, flooding, or sparking outlets, call (415) 555-0142 first — I'll help with everything else right here.`,
 ] as const
 
 export const MAINTENANCE_READY_PROACTIVE = [
   `Hey Jordan — looks like something might need attention in Apt 4B.`,
-  `Your move-in checklist is done, so we can jump straight in. Tell me what's going on (or tap a chip). For gas, fire, flooding, or sparking outlets, call 555-0142 first.`,
+  `Your move-in checklist is done, so we can jump straight in. Tell me what's going on (or tap a chip). For gas, fire, flooding, or sparking outlets, call (415) 555-0142 first.`,
 ] as const
 
 export const NUDGES_SEED_MESSAGES = [

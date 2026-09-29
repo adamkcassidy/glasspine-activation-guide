@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Bell, Building2, Camera } from 'lucide-react'
+import { Bell, Camera, Landmark } from 'lucide-react'
 import { AutopaySetup } from '@/components/checklist/AutopaySetup'
 import { ChecklistItem } from '@/components/checklist/ChecklistItem'
 import { NotificationSetup } from '@/components/checklist/NotificationSetup'
@@ -32,7 +32,7 @@ export function ChecklistPage() {
           Move-In Checklist
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {completedCount} of {totalCount} complete — photos, notifications, then autopay
+          {completedCount} of {totalCount} complete: photos, notifications, then autopay
         </p>
       </div>
 
@@ -40,7 +40,7 @@ export function ChecklistPage() {
 
       <ChecklistItem
         title="Document unit condition"
-        description="Document each room now — a timestamped record that protects your deposit and gives you and your property manager the same reference point if a dispute comes up later."
+        description="Document each room now. A timestamped record protects your deposit and gives you and your property manager the same reference point if a dispute comes up later."
         done={photosDone}
         icon={Camera}
       >
@@ -49,7 +49,7 @@ export function ChecklistPage() {
 
       <ChecklistItem
         title="Turn on notifications"
-        description="Stay in the loop for as long as you live here — maintenance updates, rent reminders, and anything that needs your attention, so nothing catches you off guard."
+        description="Stay in the loop for as long as you live here: maintenance updates, rent reminders, and anything that needs your attention, so nothing catches you off guard."
         done={notificationsDone}
         icon={Bell}
       >
@@ -58,9 +58,9 @@ export function ChecklistPage() {
 
       <ChecklistItem
         title="Set up autopay"
-        description="Connect your bank — rent drafts on the 1st"
+        description="Connect your bank so rent drafts on the 1st."
         done={autopayDone}
-        icon={Building2}
+        icon={Landmark}
       >
         <AutopaySetup />
       </ChecklistItem>

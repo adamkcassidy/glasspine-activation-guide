@@ -105,7 +105,7 @@ export function AutopaySetup() {
                 Connect your bank
               </h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Mock institution search — nothing is linked for real.
+                Mock institution search. Nothing is linked for real.
               </p>
             </div>
             <Button
@@ -211,7 +211,7 @@ export function AutopaySetup() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Rent is paid by ACH bank transfer. Connect your account once — we&apos;ll draft on the{' '}
+        Rent is paid by ACH bank transfer. Connect your account once and we&apos;ll draft on the{' '}
         {RENT_DUE_DAY === 1 ? '1st' : `${RENT_DUE_DAY}th`} each month (your lease due date).
       </p>
       <Button type="button" size="sm" onClick={openModal}>
@@ -219,7 +219,7 @@ export function AutopaySetup() {
         Connect your bank account
       </Button>
       <p className="text-[11px] text-muted-foreground">
-        Mock Plaid-style connect — nothing is charged in this demo.
+        Mock Plaid-style connect. Nothing is charged in this demo.
       </p>
       {modal}
     </div>

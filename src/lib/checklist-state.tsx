@@ -366,6 +366,13 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    if (pathname.startsWith('/contact')) {
+      setPendingBoot([
+        'You’re on Contact. Office hours and the emergency maintenance line are listed on the page.',
+      ])
+      return
+    }
+
     const scene = sceneFromPath(pathname)
 
     if (scene === 'maintenance') {

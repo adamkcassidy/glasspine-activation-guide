@@ -55,7 +55,7 @@ function MessageCard({ card }: { card: ChatCard }) {
         <div className="flex items-start gap-2">
           <Phone className="mt-0.5 size-4 shrink-0 text-destructive" />
           <div>
-            <p className="font-medium">Call 555-0142 now</p>
+            <p className="font-medium">Call (415) 555-0142 now</p>
             <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
               Gas, fire, flooding, no heat in winter, or sparking outlets — contact on-call
               maintenance before filing a normal request.
@@ -65,7 +65,7 @@ function MessageCard({ card }: { card: ChatCard }) {
         <Button type="button" size="sm" asChild className="w-full sm:w-auto">
           <a href="tel:5550142">
             <Phone className="size-3.5" />
-            Call 555-0142
+            Call (415) 555-0142
           </a>
         </Button>
       </div>

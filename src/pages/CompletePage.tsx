@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   ArrowRight,
   BadgeCheck,
-  Building2,
+  Calendar,
   Car,
   ClipboardList,
   CloudSun,
@@ -22,43 +22,43 @@ const SECONDARY_TILES = [
   {
     title: 'Rent due',
     description: 'Due on the 1st · 5-day grace period',
-    icon: Building2,
-    action: 'View',
+    icon: Calendar,
+    action: 'Set up autopay',
     kind: 'rent' as const,
   },
   {
     title: 'Report a maintenance issue',
     description: 'Guide helps triage and capture a clear ticket.',
     icon: Wrench,
-    action: 'Report',
+    action: 'Report an issue',
     kind: 'maintenance' as const,
-  },
-  {
-    title: 'Refer a friend',
-    description: 'Give them a discount, get one yourself.',
-    icon: UserPlus,
-    action: 'Refer',
-    kind: 'soon' as const,
   },
   {
     title: 'Review your lease',
     description: 'See key terms, dates, and renewal options.',
     icon: FileText,
-    action: 'View',
-    kind: 'soon' as const,
-  },
-  {
-    title: 'Add a pet',
-    description: 'Submit pet details and get approval.',
-    icon: PawPrint,
-    action: 'Add',
+    action: 'View lease details',
     kind: 'soon' as const,
   },
   {
     title: 'Parking permit',
     description: 'Request or renew your assigned spot.',
     icon: Car,
-    action: 'Reserve',
+    action: 'Reserve a spot',
+    kind: 'soon' as const,
+  },
+  {
+    title: 'Add a pet',
+    description: 'Submit pet details and get approval.',
+    icon: PawPrint,
+    action: 'Add a pet',
+    kind: 'soon' as const,
+  },
+  {
+    title: 'Refer a friend',
+    description: 'Give them a discount, get one yourself.',
+    icon: UserPlus,
+    action: 'Refer a friend',
     kind: 'soon' as const,
   },
 ] as const
@@ -92,7 +92,10 @@ function SoftConfetti({ play }: { play: boolean }) {
   if (!play) return null
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+    <div
+      className="pointer-events-none absolute left-1/2 top-1/2 z-0 size-36 -translate-x-1/2 -translate-y-1/2 overflow-visible"
+      aria-hidden
+    >
       {pieces.map((p) => (
         <span
           key={p.id}
@@ -137,17 +140,20 @@ export function CompletePage() {
   return (
     <div className="space-y-5">
       <section className="animate-soft-rise overflow-hidden rounded-2xl border border-border/80 bg-card/90 shadow-sm">
-        <div className="relative aspect-[21/9] min-h-[140px] w-full bg-muted sm:min-h-[180px]">
+        {/* Source photo is 2400×1890. Tall crop + object-cover keeps detail sharp. */}
+        <div className="relative h-[260px] w-full overflow-hidden bg-muted sm:h-[340px] md:h-[400px]">
           {!heroFailed ? (
             <img
               src="/apartment-hero.jpg"
               alt={`${RESIDENT.unit} at ${RESIDENT.community}`}
-              className="size-full object-cover"
+              width={2400}
+              height={1890}
+              className="absolute inset-0 size-full object-cover object-center"
               onError={() => setHeroFailed(true)}
             />
           ) : (
             <div
-              className="size-full bg-gradient-to-br from-accent via-secondary to-muted"
+              className="absolute inset-0 size-full bg-gradient-to-br from-accent via-secondary to-muted"
               aria-hidden
             />
           )}
@@ -165,7 +171,6 @@ export function CompletePage() {
               <span className="inline-flex items-center gap-1 text-white/85">
                 <CloudSun className="size-3.5 shrink-0 opacity-80" />
                 {RESIDENT.weather}
-                <span className="text-[10px] uppercase tracking-wider text-white/55">static</span>
               </span>
             </p>
           </div>
@@ -180,7 +185,6 @@ export function CompletePage() {
             'hover:border-primary/50 hover:bg-primary/[0.08]',
           )}
         >
-          <SoftConfetti play={false} />
           <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <ClipboardList className="size-5" />
           </div>
@@ -192,25 +196,28 @@ export function CompletePage() {
               Move-In Checklist
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {completedCount} of {totalCount} complete — photos, notifications, and autopay.
+              Protect your deposit, stay notified, and set up rent on time.{' '}
+              {completedCount} of {totalCount} complete.
             </p>
             <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary">
-              Continue checklist
+              View checklist
               <ArrowRight className="size-4" />
             </span>
           </div>
         </Link>
       ) : (
-        <div className="animate-soft-rise relative overflow-hidden rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 shadow-sm">
-          <SoftConfetti play={celebrate} />
+        <div className="animate-soft-rise relative overflow-visible rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 shadow-sm">
           <div className="relative flex items-center gap-3">
-            <div
-              className={cn(
-                'flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground',
-                celebrate && 'animate-check-spring',
-              )}
-            >
-              <BadgeCheck className="size-4" />
+            <div className="relative z-10 flex size-9 shrink-0 items-center justify-center overflow-visible">
+              <SoftConfetti play={celebrate} />
+              <div
+                className={cn(
+                  'relative z-10 flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground',
+                  celebrate && 'animate-check-spring',
+                )}
+              >
+                <BadgeCheck className="size-4" />
+              </div>
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-foreground">Checklist complete</p>
@@ -219,7 +226,7 @@ export function CompletePage() {
               </p>
             </div>
             <Button asChild size="sm" variant="secondary">
-              <Link to="/checklist">View</Link>
+              <Link to="/checklist">View checklist</Link>
             </Button>
           </div>
         </div>
@@ -227,7 +234,8 @@ export function CompletePage() {
 
       <div className="grid gap-3 sm:grid-cols-2 animate-soft-rise [animation-delay:100ms]">
         {SECONDARY_TILES.map(({ title, description, icon: Icon, action, kind }) => {
-          const actionLabel = kind === 'rent' && !autopayDone ? 'Set up autopay' : action
+          const actionLabel =
+            kind === 'rent' ? (autopayDone ? 'View rent details' : 'Set up autopay') : action
           const body = (
             <div className="flex items-start gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
@@ -239,7 +247,7 @@ export function CompletePage() {
                   <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
                   {kind === 'rent' && autopayDone && autopay && (
                     <p className="mt-2 text-sm text-primary">
-                      Autopay on · we&apos;ll draft your rent on the 1st of each month
+                      Autopay on. We&apos;ll draft your rent on the 1st of each month.
                     </p>
                   )}
                 </div>

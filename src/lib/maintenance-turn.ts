@@ -68,7 +68,7 @@ export function resolveMaintenanceTurn(
     }
     actions.chooseMaintenanceEmergency()
     return {
-      text: 'This sounds like an emergency. Leave the unit if it feels unsafe and call 555-0142 immediately — I won’t file a normal work order until you’re safe.',
+      text: 'This sounds like an emergency. Leave the unit if it feels unsafe and call (415) 555-0142 immediately — I won’t file a normal work order until you’re safe.',
       chips: ["It's not that urgent", 'What counts as emergency?'],
       card: { kind: 'emergency_handoff' },
     }
@@ -149,7 +149,7 @@ export function resolveMaintenanceTurn(
 
   if (n === 'what counts as emergency?') {
     return {
-      text: 'Call 555-0142 first for gas smell, fire, active flooding, no heat in freezing weather, or sparking outlets. Everything else is usually routine and I can file it here.',
+      text: 'Call (415) 555-0142 first for gas smell, fire, active flooding, no heat in freezing weather, or sparking outlets. Everything else is usually routine and I can file it here.',
       chips: ['Kitchen faucet dripping', 'Submit a maintenance request'],
     }
   }

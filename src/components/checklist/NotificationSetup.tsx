@@ -54,7 +54,7 @@ export function NotificationSetup() {
           <span className="font-medium">Notifications on</span>
         </div>
         <p className="text-muted-foreground">
-          {on.length > 0 ? on.join(' · ') : 'Saved'} — we&apos;ll use these channels for
+          {on.length > 0 ? on.join(' · ') : 'Saved'}. We&apos;ll use these channels for
           maintenance updates, rent reminders, and anything that needs your attention.
         </p>
       </div>

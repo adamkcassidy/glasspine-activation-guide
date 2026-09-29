@@ -11,6 +11,16 @@ export const RESIDENT = {
   phoneDisplay: '(415) 555-4821',
 } as const
 
+/** Static property management contact — Contact page only. */
+export const PROPERTY_CONTACT = {
+  managerName: 'Maya Chen',
+  managerTitle: 'Property Manager',
+  phoneDisplay: '(415) 555-0198',
+  email: 'maya.chen@oakstreetresidences.com',
+  officeHours: 'Mon-Fri, 9am-5pm',
+  emergencyLine: '(415) 555-0142',
+} as const
+
 export const ROOM_LABELS = [
   'Kitchen',
   'Living room',

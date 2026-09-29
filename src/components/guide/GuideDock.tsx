@@ -22,6 +22,9 @@ function nudgeCopyForPath(pathname: string): string {
   if (pathname.startsWith('/write-up')) {
     return 'Questions about the Guide-led move-in flow? I’m here.'
   }
+  if (pathname.startsWith('/contact')) {
+    return 'Need the office number or emergency line? They’re listed on this page.'
+  }
   // Dashboard (`/`) and legacy `/complete`
   return 'You’re on Dashboard — ask me about the checklist, rent, or maintenance anytime.'
 }
