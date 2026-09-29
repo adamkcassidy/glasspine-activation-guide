@@ -23,16 +23,11 @@ function sceneFromPath(pathname: string): GuideScene {
   return 'welcome'
 }
 
-function GuideAvatar({ size = 'md' }: { size?: 'sm' | 'md' }) {
+function GuideAvatar() {
   return (
-    <Avatar
-      className={cn(
-        'shrink-0 border border-primary/20',
-        size === 'sm' ? 'size-7' : 'size-8',
-      )}
-    >
+    <Avatar className="size-8 shrink-0 border border-primary/20">
       <AvatarFallback className="bg-primary/10 text-primary">
-        <Sparkles className={size === 'sm' ? 'size-3' : 'size-3.5'} />
+        <Sparkles className="size-3.5" />
       </AvatarFallback>
     </Avatar>
   )
@@ -400,11 +395,10 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
             <div
               key={m.id}
               className={cn(
-                'animate-message-in flex gap-2',
+                'animate-message-in flex',
                 m.role === 'user' ? 'justify-end' : 'justify-start',
               )}
             >
-              {m.role === 'assistant' && <GuideAvatar size="sm" />}
               <div
                 className={cn(
                   'max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed',
@@ -419,8 +413,7 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
             </div>
           ))}
           {typing && (
-            <div className="flex gap-2">
-              <GuideAvatar size="sm" />
+            <div className="flex justify-start">
               <div className="rounded-2xl rounded-bl-md bg-muted/80 px-3 py-2">
                 <TypingDots />
               </div>
