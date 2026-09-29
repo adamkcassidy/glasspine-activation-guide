@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Bell, Building2, Camera } from 'lucide-react'
 import { AutopaySetup } from '@/components/checklist/AutopaySetup'
@@ -14,12 +14,15 @@ export function ChecklistPage() {
     useChecklist()
   const navigate = useNavigate()
   const progress = (completedCount / totalCount) * 100
+  // Only redirect on the incomplete → complete transition during this visit.
+  const prevAllDoneRef = useRef(allDone)
 
   useEffect(() => {
-    if (allDone) {
-      const t = window.setTimeout(() => navigate('/complete'), 600)
-      return () => window.clearTimeout(t)
-    }
+    const justCompleted = allDone && !prevAllDoneRef.current
+    prevAllDoneRef.current = allDone
+    if (!justCompleted) return
+    const t = window.setTimeout(() => navigate('/complete'), 600)
+    return () => window.clearTimeout(t)
   }, [allDone, navigate])
 
   return (
