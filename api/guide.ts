@@ -57,6 +57,8 @@ Rules:
 - When explaining move-in photos: a dated photo record of unit condition on move-in day gives the resident and property manager the same reference point if questions come up later.`
 }
 
+const GUIDE_MODELS = ['gemini-3.8-flash', 'gemini-2.0-flash'] as const
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST')
@@ -79,36 +81,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'scene and message are required' })
   }
 
-  try {
-    const prior = (history ?? [])
-      .slice(-8)
-      .map((m) => `${m.role === 'user' ? 'Resident' : 'Guide'}: ${m.content}`)
-      .join('\n')
+  const prior = (history ?? [])
+    .slice(-8)
+    .map((m) => `${m.role === 'user' ? 'Resident' : 'Guide'}: ${m.content}`)
+    .join('\n')
 
-    console.log('[guide] calling generateText', {
-      scene,
-      messageLen: message.trim().length,
-      historyLen: history?.length ?? 0,
-    })
+  const prompt = `${prior ? `Conversation so far:\n${prior}\n\n` : ''}Resident: ${message}\nGuide:`
+  const system = buildSystemPrompt(scene, checklistState)
 
-    const { text } = await generateText({
-      model: google('gemini-3.8-flash'),
-      system: buildSystemPrompt(scene, checklistState),
-      prompt: `${prior ? `Conversation so far:\n${prior}\n\n` : ''}Resident: ${message}\nGuide:`,
-    })
+  let lastError: unknown
 
-    console.log('[guide] generateText done', {
-      textLen: text?.length ?? 0,
-      preview: text?.slice(0, 80) ?? '',
-    })
+  for (const modelId of GUIDE_MODELS) {
+    try {
+      console.log('[guide] calling generateText', {
+        model: modelId,
+        scene,
+        messageLen: message.trim().length,
+        historyLen: history?.length ?? 0,
+      })
 
-    if (!text?.trim()) {
-      return res.status(502).json({ error: 'Empty model response' })
+      const { text } = await generateText({
+        model: google(modelId),
+        system,
+        prompt,
+        maxRetries: 1,
+      })
+
+      console.log('[guide] generateText done', {
+        model: modelId,
+        textLen: text?.length ?? 0,
+        preview: text?.slice(0, 80) ?? '',
+      })
+
+      if (!text?.trim()) {
+        lastError = new Error(`Empty model response from ${modelId}`)
+        continue
+      }
+
+      return res.status(200).json({ text: text.trim() })
+    } catch (error) {
+      lastError = error
+      console.error(`[guide] model ${modelId} failed`, error)
     }
-
-    return res.status(200).json({ text: text.trim() })
-  } catch (error) {
-    console.error('[guide] Guide API error', error)
-    return res.status(502).json({ error: 'Model call failed' })
   }
+
+  console.error('[guide] Guide API error — all models failed', lastError)
+  return res.status(502).json({ error: 'Model call failed' })
 }
