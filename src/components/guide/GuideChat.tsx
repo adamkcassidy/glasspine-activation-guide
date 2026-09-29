@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { CheckCircle2, ChevronDown, Loader2, Phone, Send, Sparkles } from 'lucide-react'
 import { askGuide, delay } from '@/lib/guide-client'
 import { getSuggestedChips, type GuideScene } from '@/lib/guide-scripts'
+import { resolveMaintenanceTurn } from '@/lib/maintenance-turn'
 import {
   useChecklist,
   type ChatCard,
@@ -203,30 +204,20 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
     const trimmed = text.trim()
     if (!trimmed || typing || booting) return
 
+    const maintenanceActions = {
+      beginMaintenanceClarifying,
+      chooseMaintenanceEmergency,
+      chooseMaintenanceRoutine,
+      prepareMaintenanceConfirm,
+      submitMaintenanceRequest,
+      updateMaintenanceDraft,
+    }
+
+    // Known maintenance chips always run the scripted state machine locally so
+    // confirm + submittedRequest update even when live Gemini is unavailable.
     if (scene === 'maintenance') {
-      const isEmergencyPhrase =
-        /gas smell|fire|flood|spark|no heat/i.test(trimmed) ||
-        /gas smell \/ emergency/i.test(trimmed) ||
-        /it'?s an emergency|submit as emergency/i.test(trimmed)
-
-      const isRoutinePhrase =
-        /routine — sink is dripping/i.test(trimmed) ||
-        /not that urgent/i.test(trimmed)
-
-      const isEntryYes = /yes, you can enter/i.test(trimmed)
-      const isEntryNo = /i'?d rather be home/i.test(trimmed)
-      const isAttachPhoto = /attach a photo/i.test(trimmed)
-      const isConfirmSubmit =
-        /yes, submit it/i.test(trimmed) ||
-        /submit this\??/i.test(trimmed) ||
-        /^submit$/i.test(trimmed)
-      const isEditSomething = /edit something/i.test(trimmed)
-
-      if (isEmergencyPhrase) {
-        if (/gas|fire|flood|spark|no heat/i.test(trimmed) && !/it'?s an emergency/i.test(trimmed)) {
-          beginMaintenanceClarifying(/gas/i.test(trimmed) ? 'Possible gas smell' : trimmed)
-        }
-        chooseMaintenanceEmergency()
+      const local = resolveMaintenanceTurn(trimmed, maintenanceDraft, maintenanceActions)
+      if (local) {
         setMessages((prev) => [
           ...prev,
           { id: crypto.randomUUID(), role: 'user', content: trimmed },
@@ -235,132 +226,8 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
         setTyping(true)
         await delay(400)
         setTyping(false)
-        pushAssistant(
-          'This sounds like an emergency. Leave the unit if it feels unsafe and call 555-0142 immediately — I won’t file a normal work order until you’re safe.',
-          { kind: 'emergency_handoff' },
-          ["It's not that urgent", 'What counts as emergency?'],
-        )
+        pushAssistant(local.text, local.card, local.chips)
         return
-      }
-
-      if (isRoutinePhrase) {
-        const issue = maintenanceDraft.issue || 'Kitchen faucet dripping'
-        beginMaintenanceClarifying(issue)
-        chooseMaintenanceRoutine()
-        setMessages((prev) => [
-          ...prev,
-          { id: crypto.randomUUID(), role: 'user', content: trimmed },
-        ])
-        setInput('')
-        setTyping(true)
-        await delay(400)
-        setTyping(false)
-        pushAssistant(
-          'Sounds routine. Is it okay to enter Apt 4B if you’re not home? You can also attach a photo of the issue.',
-          undefined,
-          ['Yes, you can enter', "I'd rather be home", 'Attach a photo'],
-        )
-        return
-      }
-
-      if (isAttachPhoto) {
-        updateMaintenanceDraft({ photoSrc: '/rooms/room-1.jpg' })
-        setMessages((prev) => [
-          ...prev,
-          { id: crypto.randomUUID(), role: 'user', content: trimmed },
-        ])
-        setInput('')
-        setTyping(true)
-        await delay(350)
-        setTyping(false)
-        pushAssistant(
-          'Photo attached from your kitchen. Still okay if we enter when you’re out?',
-          undefined,
-          ['Yes, you can enter', "I'd rather be home"],
-        )
-        return
-      }
-
-      if (isEntryYes || isEntryNo) {
-        const permissionToEnter = isEntryYes
-        prepareMaintenanceConfirm(permissionToEnter)
-        const issue = maintenanceDraft.issue || 'Kitchen faucet dripping'
-        const entryLine = permissionToEnter
-          ? 'OK to enter if you’re not home'
-          : 'Prefer you be home before entry'
-        setMessages((prev) => [
-          ...prev,
-          { id: crypto.randomUUID(), role: 'user', content: trimmed },
-        ])
-        setInput('')
-        setTyping(true)
-        await delay(400)
-        setTyping(false)
-        pushAssistant(
-          `Here’s what I’m about to submit:\n• ${issue}\n• Priority: routine\n• ${entryLine}\n\nSubmit this?`,
-          undefined,
-          ['Yes, submit it', 'Edit something'],
-        )
-        return
-      }
-
-      if (isConfirmSubmit) {
-        const issue = maintenanceDraft.issue || 'Kitchen faucet dripping'
-        const location = maintenanceDraft.location || 'Apt 4B kitchen'
-        const photoSrc = maintenanceDraft.photoSrc
-        const permissionToEnter = maintenanceDraft.permissionToEnter
-        const ticketId = submitMaintenanceRequest()
-        setMessages((prev) => [
-          ...prev,
-          { id: crypto.randomUUID(), role: 'user', content: trimmed },
-        ])
-        setInput('')
-        setTyping(true)
-        await delay(450)
-        setTyping(false)
-        pushAssistant(
-          'Filed as routine. Here’s your confirmation — you can track it anytime from this ticket.',
-          {
-            kind: 'maintenance_ticket',
-            ticketId,
-            issue,
-            location,
-            priority: 'routine',
-            permissionToEnter,
-            photoSrc,
-          },
-          ['What counts as emergency?', 'Kitchen faucet dripping'],
-        )
-        return
-      }
-
-      if (isEditSomething) {
-        chooseMaintenanceRoutine()
-        setMessages((prev) => [
-          ...prev,
-          { id: crypto.randomUUID(), role: 'user', content: trimmed },
-        ])
-        setInput('')
-        setTyping(true)
-        await delay(350)
-        setTyping(false)
-        pushAssistant(
-          'No problem — what should we change? We can adjust urgency, entry permission, or start over with the issue.',
-          undefined,
-          [
-            "It's an emergency",
-            'Routine — sink is dripping',
-            'Yes, you can enter',
-            "I'd rather be home",
-          ],
-        )
-        return
-      }
-
-      if (/kitchen faucet|dripping|leak|broken|appliance/i.test(trimmed)) {
-        beginMaintenanceClarifying(
-          /faucet|drip/i.test(trimmed) ? 'Kitchen faucet dripping' : trimmed,
-        )
       }
     }
 
@@ -391,6 +258,26 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
     const reply = await askGuide(scene, trimmed, history, checklistState)
     setTyping(false)
     setLastSource(reply.source)
+
+    // Safety net: if live failed over to scripted mid-flow, still apply state.
+    if (scene === 'maintenance' && reply.source === 'scripted') {
+      const local = resolveMaintenanceTurn(trimmed, maintenanceDraft, maintenanceActions)
+      if (local) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: local.text,
+            source: 'scripted',
+            card: local.card,
+          },
+        ])
+        if (local.chips.length) setChips(local.chips)
+        return
+      }
+    }
+
     setMessages((prev) => [
       ...prev,
       {
@@ -451,7 +338,7 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
             >
               <div
                 className={cn(
-                  'max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed',
+                  'max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap',
                   m.role === 'user'
                     ? 'rounded-br-md bg-primary text-primary-foreground'
                     : 'rounded-bl-md bg-muted/80 text-foreground',

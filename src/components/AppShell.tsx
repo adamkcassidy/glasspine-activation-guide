@@ -6,10 +6,15 @@ import { MetaBar } from '@/components/MetaBar'
 import { PineMark } from '@/components/PineMark'
 import { useChecklist } from '@/lib/checklist-state'
 import { RESIDENT } from '@/lib/resident'
+import { cn } from '@/lib/utils'
+
+/** Matches GuideDock open panel: right-5 + min(100vw-1.5rem, 400px) + gap. */
+const OPEN_CHAT_PAD =
+  'max(1rem, calc(min(100vw - 1.5rem, 400px) + 2.75rem))'
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation()
-  const { bootGuideForPath } = useChecklist()
+  const { bootGuideForPath, chatCollapsed } = useChecklist()
 
   useEffect(() => {
     bootGuideForPath(location.pathname)
@@ -19,7 +24,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-svh w-full flex-col">
       <MetaBar />
 
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pt-4 sm:px-6">
+      <div
+        className={cn(
+          'mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pt-4 sm:px-6',
+          'transition-[padding] duration-200 ease-out',
+        )}
+        style={!chatCollapsed ? { paddingRight: OPEN_CHAT_PAD } : undefined}
+      >
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-3">
             <PineMark />

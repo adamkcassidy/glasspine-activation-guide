@@ -1,4 +1,4 @@
-import { Apple, Bell, Check } from 'lucide-react'
+import { Bell, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useChecklist } from '@/lib/checklist-state'
 import { RESIDENT } from '@/lib/resident'
@@ -100,35 +100,35 @@ export function NotificationSetup() {
       </div>
 
       <div className="rounded-lg border border-border/80 bg-muted/30 px-3 py-3">
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1 space-y-2">
-            <div>
-              <p className="text-sm font-medium">Want instant alerts?</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Download the Glasspine app for push notifications on your phone.
-              </p>
-            </div>
+        <div className="min-w-0 space-y-2">
+          <div>
+            <p className="text-sm font-medium">Want instant alerts?</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Download the Glasspine app for push notifications on your phone.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={downloadApp}
               className={cn(
-                'inline-flex items-center gap-2.5 rounded-xl px-3.5 py-2 text-left transition-colors',
-                notifications.push
-                  ? 'bg-primary/10 text-primary ring-1 ring-primary/25'
-                  : 'bg-neutral-950 text-white hover:bg-neutral-900',
+                'inline-block rounded-md transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                notifications.push && 'opacity-80',
               )}
+              aria-label="Download on the App Store"
             >
-              <Apple className="size-7 shrink-0" strokeWidth={1.5} />
-              <span className="leading-tight">
-                <span className="block text-[9px] font-medium uppercase tracking-wide opacity-80">
-                  {notifications.push ? 'Ready on your phone' : 'Download on the'}
-                </span>
-                <span className="block text-[15px] font-semibold tracking-tight">
-                  {notifications.push ? 'Glasspine App' : 'App Store'}
-                </span>
-              </span>
-              {notifications.push && <Check className="ml-1 size-3.5 shrink-0" />}
+              <img
+                src="/app-store-badge.png"
+                alt="Download on the App Store"
+                className="h-10 w-auto"
+              />
             </button>
+            {notifications.push && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                <Check className="size-3.5" />
+                Ready on your phone
+              </span>
+            )}
           </div>
         </div>
       </div>
