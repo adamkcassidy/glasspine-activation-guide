@@ -67,12 +67,24 @@ const CHIP_REPLIES: Record<string, ScriptedReply> = {
     chips: ["It's not that urgent", 'What counts as emergency?'],
   },
   'Routine — sink is dripping': {
-    text: 'Sounds routine. I’ll file that for you now — kitchen faucet drip, Apt 4B kitchen, permission to enter if you’re out.',
-    chips: ['What counts as emergency?'],
+    text: 'Sounds routine. Is it okay to enter Apt 4B if you’re not home? You can also attach a photo of the issue.',
+    chips: ['Yes, you can enter', "I'd rather be home", 'Attach a photo'],
   },
   "It's not that urgent": {
-    text: 'Understood — treating it as routine. I’ll submit the request for you now.',
+    text: 'Understood — treating it as routine. Is it okay to enter if you’re not home? Optional: attach a photo of the issue.',
+    chips: ['Yes, you can enter', "I'd rather be home", 'Attach a photo'],
+  },
+  'Yes, you can enter': {
+    text: 'Permission to enter noted. Filing your request now.',
     chips: ['What counts as emergency?'],
+  },
+  "I'd rather be home": {
+    text: 'Got it — we’ll note that you’d prefer to be home. Filing your request now.',
+    chips: ['What counts as emergency?'],
+  },
+  'Attach a photo': {
+    text: 'Photo attached from your kitchen. Still okay if we enter when you’re out?',
+    chips: ['Yes, you can enter', "I'd rather be home"],
   },
   'I can shut it off': {
     text: 'Good — shutting it off helps. Is this still routine, or do you need emergency help?',

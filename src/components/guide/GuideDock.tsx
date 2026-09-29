@@ -13,7 +13,7 @@ export function GuideDock({ className }: { className?: string }) {
         type="button"
         size="icon"
         className={cn(
-          'fixed bottom-5 right-5 z-40 size-12 rounded-full shadow-md',
+          'fixed bottom-5 right-5 z-40 size-12 rounded-full shadow-md animate-guide-pulse',
           className,
         )}
         onClick={() => setChatCollapsed(false)}

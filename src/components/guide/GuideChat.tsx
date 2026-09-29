@@ -77,19 +77,30 @@ function MessageCard({ card }: { card: ChatCard }) {
   }
 
   return (
-    <div className="mt-2 space-y-1.5 rounded-xl border border-primary/25 bg-background/80 p-3 text-sm">
+    <div className="mt-2 space-y-2 rounded-xl border border-primary/25 bg-background/80 p-3 text-sm">
       <div className="flex items-start gap-2">
         <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="font-medium">Request submitted · {card.ticketId}</p>
           <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
             {card.issue} · {card.location} · {card.priority}
+            {card.permissionToEnter != null &&
+              ` · ${card.permissionToEnter ? 'entry OK if out' : 'prefer resident home'}`}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Expected response within 1–2 business days for routine jobs.
           </p>
         </div>
       </div>
+      {card.photoSrc && (
+        <div className="overflow-hidden rounded-lg border border-border/70">
+          <img
+            src={card.photoSrc}
+            alt="Issue photo"
+            className="aspect-video w-full object-cover"
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -118,7 +129,7 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
     chooseMaintenanceEmergency,
     chooseMaintenanceRoutine,
     submitMaintenanceRequest,
-    lastSource,
+    updateMaintenanceDraft,
     setMessages,
     setChips,
     setLastSource,
@@ -203,8 +214,12 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
         /it'?s an emergency|submit as emergency/i.test(trimmed)
 
       const isRoutinePhrase =
-        /routine|not that urgent|i can shut it off/i.test(trimmed) ||
-        /routine — sink is dripping/i.test(trimmed)
+        /routine — sink is dripping/i.test(trimmed) ||
+        /not that urgent/i.test(trimmed)
+
+      const isEntryYes = /yes, you can enter/i.test(trimmed)
+      const isEntryNo = /i'?d rather be home/i.test(trimmed)
+      const isAttachPhoto = /attach a photo/i.test(trimmed)
 
       if (isEmergencyPhrase) {
         if (/gas|fire|flood|spark|no heat/i.test(trimmed) && !/it'?s an emergency/i.test(trimmed)) {
@@ -229,8 +244,48 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
 
       if (isRoutinePhrase) {
         const issue = maintenanceDraft.issue || 'Kitchen faucet dripping'
-        const location = maintenanceDraft.location || 'Apt 4B kitchen'
         beginMaintenanceClarifying(issue)
+        chooseMaintenanceRoutine()
+        setMessages((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), role: 'user', content: trimmed },
+        ])
+        setInput('')
+        setTyping(true)
+        await delay(400)
+        setTyping(false)
+        pushAssistant(
+          'Sounds routine. Is it okay to enter Apt 4B if you’re not home? You can also attach a photo of the issue.',
+          undefined,
+          ['Yes, you can enter', "I'd rather be home", 'Attach a photo'],
+        )
+        return
+      }
+
+      if (isAttachPhoto) {
+        updateMaintenanceDraft({ photoSrc: '/rooms/room-1.jpg' })
+        setMessages((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), role: 'user', content: trimmed },
+        ])
+        setInput('')
+        setTyping(true)
+        await delay(350)
+        setTyping(false)
+        pushAssistant(
+          'Photo attached from your kitchen. Still okay if we enter when you’re out?',
+          undefined,
+          ['Yes, you can enter', "I'd rather be home"],
+        )
+        return
+      }
+
+      if (isEntryYes || isEntryNo) {
+        const permissionToEnter = isEntryYes
+        const issue = maintenanceDraft.issue || 'Kitchen faucet dripping'
+        const location = maintenanceDraft.location || 'Apt 4B kitchen'
+        const photoSrc = maintenanceDraft.photoSrc
+        updateMaintenanceDraft({ permissionToEnter })
         chooseMaintenanceRoutine()
         const ticketId = submitMaintenanceRequest()
         setMessages((prev) => [
@@ -249,6 +304,8 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
             issue,
             location,
             priority: 'routine',
+            permissionToEnter,
+            photoSrc,
           },
           ['What counts as emergency?', 'Kitchen faucet dripping'],
         )
@@ -302,8 +359,6 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
   }
 
   const busy = typing || booting
-  const sourceLabel =
-    lastSource === 'live' ? 'Live' : lastSource === 'scripted' ? 'Scripted' : null
 
   return (
     <div
@@ -323,27 +378,6 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
             >
               AI
             </Badge>
-            {sourceLabel && (
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1 text-[10px] font-medium',
-                  lastSource === 'live' ? 'text-primary' : 'text-muted-foreground',
-                )}
-                title={
-                  lastSource === 'live'
-                    ? 'Last reply from Gemini'
-                    : 'Last reply used scripted fallback'
-                }
-              >
-                <span
-                  className={cn(
-                    'size-1.5 rounded-full',
-                    lastSource === 'live' ? 'bg-primary' : 'bg-muted-foreground/60',
-                  )}
-                />
-                {sourceLabel}
-              </span>
-            )}
           </div>
         </div>
         {onCollapse && (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
@@ -16,15 +16,81 @@ import { RESIDENT } from '@/lib/resident'
 import { cn } from '@/lib/utils'
 
 const COMING_SOON = [
-  { title: 'Review your lease', icon: FileText },
-  { title: 'Refer a friend', icon: UserPlus },
-  { title: 'Add a pet', icon: PawPrint },
-  { title: 'Parking permit', icon: Car },
+  {
+    title: 'Review your lease',
+    description: 'See key terms, dates, and renewal options.',
+    icon: FileText,
+  },
+  {
+    title: 'Refer a friend',
+    description: 'Give them a discount, get one yourself.',
+    icon: UserPlus,
+  },
+  {
+    title: 'Add a pet',
+    description: 'Submit pet details and get approval.',
+    icon: PawPrint,
+  },
+  {
+    title: 'Parking permit',
+    description: 'Request or renew your assigned spot.',
+    icon: Car,
+  },
 ] as const
+
+const CONFETTI_COLORS = [
+  'oklch(0.42 0.08 140)',
+  'oklch(0.55 0.1 140)',
+  'oklch(0.7 0.08 90)',
+  'oklch(0.6 0.08 100)',
+  'oklch(0.45 0.06 160)',
+] as const
+
+function SoftConfetti({ play }: { play: boolean }) {
+  const pieces = useMemo(
+    () =>
+      Array.from({ length: 16 }, (_, i) => {
+        const angle = (i / 16) * Math.PI * 2 + (i % 3) * 0.2
+        const dist = 48 + (i % 5) * 14
+        return {
+          id: i,
+          dx: `${Math.cos(angle) * dist}px`,
+          dy: `${Math.sin(angle) * dist - 20}px`,
+          rot: `${(i % 2 === 0 ? 1 : -1) * (140 + i * 12)}deg`,
+          delay: `${(i % 6) * 40}ms`,
+          color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        }
+      }),
+    [],
+  )
+
+  if (!play) return null
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      {pieces.map((p) => (
+        <span
+          key={p.id}
+          className="confetti-piece"
+          style={
+            {
+              '--dx': p.dx,
+              '--dy': p.dy,
+              '--rot': p.rot,
+              backgroundColor: p.color,
+              animationDelay: p.delay,
+            } as CSSProperties
+          }
+        />
+      ))}
+    </div>
+  )
+}
 
 export function CompletePage() {
   const { photos, notificationsDone, allDone, autopay, autopayDone } = useChecklist()
   const [toast, setToast] = useState<string | null>(null)
+  const [celebrate, setCelebrate] = useState(false)
   const photoCount = photos.length
   const parts: string[] = []
   if (photoCount > 0) {
@@ -45,10 +111,26 @@ export function CompletePage() {
     return () => window.clearTimeout(t)
   }, [toast])
 
+  useEffect(() => {
+    if (!allDone) {
+      setCelebrate(false)
+      return
+    }
+    setCelebrate(true)
+    const t = window.setTimeout(() => setCelebrate(false), 1800)
+    return () => window.clearTimeout(t)
+  }, [allDone])
+
   return (
     <div className="space-y-6">
-      <div className="animate-soft-rise rounded-2xl border border-primary/25 bg-card/90 p-6 text-center shadow-sm sm:p-8">
-        <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary animate-check-pop">
+      <div className="animate-soft-rise relative overflow-hidden rounded-2xl border border-primary/25 bg-card/90 p-6 text-center shadow-sm sm:p-8">
+        <SoftConfetti play={celebrate} />
+        <div
+          className={cn(
+            'relative mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary',
+            allDone && 'animate-check-spring',
+          )}
+        >
           <BadgeCheck className="size-8" />
         </div>
         <h1 className="font-serif text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -109,7 +191,7 @@ export function CompletePage() {
           </div>
         </div>
 
-        {COMING_SOON.map(({ title, icon: Icon }) => (
+        {COMING_SOON.map(({ title, description, icon: Icon }) => (
           <button
             key={title}
             type="button"
@@ -125,6 +207,7 @@ export function CompletePage() {
               </div>
               <div>
                 <h2 className="font-medium">{title}</h2>
+                <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
               </div>
             </div>
           </button>

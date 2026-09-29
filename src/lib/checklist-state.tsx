@@ -43,6 +43,8 @@ export type ChatCard =
       issue: string
       location: string
       priority: 'routine' | 'emergency'
+      permissionToEnter?: boolean
+      photoSrc?: string | null
     }
   | {
       kind: 'emergency_handoff'
