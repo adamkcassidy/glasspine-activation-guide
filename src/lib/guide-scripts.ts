@@ -165,7 +165,7 @@ const INTENT_REPLIES: Record<GuideScene, Record<string, ScriptedReply>> = {
   },
   complete: {
     checklist_help: {
-      text: "You're set on move-in essentials. From Home you can check rent/autopay or submit a maintenance request.",
+      text: "You're set on move-in essentials. From Dashboard you can check rent/autopay or submit a maintenance request.",
       chips: ['Show maintenance tip', 'How does autopay work?'],
     },
     maintenance: CHIP_REPLIES['Show maintenance tip'],
@@ -238,7 +238,7 @@ export const WELCOME_SEQUENCE = [
 ] as const
 
 export const COMPLETE_SEED_MESSAGES = [
-  'Checklist complete — your move-in record is saved. From Home you can check rent or open a maintenance request anytime.',
+  'Checklist complete — your move-in record is saved. From Dashboard you can check rent or open a maintenance request anytime.',
 ] as const
 
 export const MAINTENANCE_PROACTIVE = [

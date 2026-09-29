@@ -7,6 +7,7 @@ import { MaintenancePage } from '@/pages/MaintenancePage'
 import { MeasurePage } from '@/pages/MeasurePage'
 import { NudgesPage } from '@/pages/NudgesPage'
 import { WelcomePage } from '@/pages/WelcomePage'
+import { WriteUpPage } from '@/pages/WriteUpPage'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
             <Route path="/maintenance" element={<MaintenancePage />} />
             <Route path="/nudges" element={<NudgesPage />} />
             <Route path="/measure" element={<MeasurePage />} />
+            <Route path="/write-up" element={<WriteUpPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AppShell>

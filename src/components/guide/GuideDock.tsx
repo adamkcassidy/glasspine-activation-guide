@@ -27,9 +27,8 @@ export function GuideDock({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        // Mobile: fixed bottom sheet · Desktop: fills sticky grid cell
-        'fixed inset-x-0 bottom-0 z-40 flex h-[min(68svh,500px)] flex-col border-t border-border/80 bg-background/95 p-2 shadow-lg backdrop-blur-sm',
-        'lg:static lg:z-auto lg:h-[min(560px,calc(100svh-9rem))] lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none',
+        'fixed bottom-5 right-5 z-40 flex w-[min(100vw-1.5rem,400px)] flex-col',
+        'h-[min(82svh,680px)]',
         className,
       )}
     >
@@ -43,9 +42,9 @@ export function GuideDock({ className }: { className?: string }) {
           aria-label="Collapse Guide"
         >
           <ChevronDown className="size-3.5" />
-          <span className="lg:sr-only">Minimize</span>
+          <span className="sr-only">Minimize</span>
         </Button>
-        <GuideChat className="h-full" />
+        <GuideChat className="h-full shadow-lg" />
       </div>
     </div>
   )

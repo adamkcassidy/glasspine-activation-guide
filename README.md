@@ -17,7 +17,8 @@ Open the URL Vite prints (usually `http://localhost:5173`). Without a live API, 
 | --- | --- |
 | `/` | Welcome + Guide intro |
 | `/checklist` | Photos, notifications, bank autopay |
-| `/complete` | Home — move-in record saved + action cards |
+| `/complete` | Dashboard — move-in record saved + action cards |
+| `/write-up` | Rationale write-up (exercise deliverable) |
 | `/maintenance` | Guide-led triage → editable request or emergency handoff |
 | `/nudges` | Mocked email / SMS / push timeline |
 | `/measure` | Static activation funnel & decision rule |

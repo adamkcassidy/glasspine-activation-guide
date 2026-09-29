@@ -23,7 +23,7 @@ const SCENE_CONTEXT: Record<Scene, string> = {
   checklist:
     'The resident is working through the Move-In Checklist. Answer briefly and encourage completing photos, notifications, and autopay.',
   complete:
-    'The resident finished the checklist. Their move-in record is saved. They are on Home — rent, maintenance, and coming-soon actions.',
+    'The resident finished the checklist. Their move-in record is saved. They are on Dashboard — rent, maintenance, and coming-soon actions.',
   maintenance:
     'The resident may have a maintenance issue. Ask 1–2 clarifying questions, triage emergency vs routine. True emergencies: direct them to call 555-0142 first. For routine, help them complete a clear request.',
   nudges:

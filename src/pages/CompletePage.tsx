@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
@@ -5,12 +6,10 @@ import {
   Building2,
   Car,
   FileText,
-  Lock,
   PawPrint,
-  Users,
+  UserPlus,
   Wrench,
 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useChecklist } from '@/lib/checklist-state'
 import { RESIDENT } from '@/lib/resident'
@@ -18,13 +17,14 @@ import { cn } from '@/lib/utils'
 
 const COMING_SOON = [
   { title: 'Review your lease', icon: FileText },
-  { title: 'Add a roommate', icon: Users },
+  { title: 'Refer a friend', icon: UserPlus },
   { title: 'Add a pet', icon: PawPrint },
   { title: 'Parking permit', icon: Car },
 ] as const
 
 export function CompletePage() {
   const { photos, notificationsDone, allDone, autopay, autopayDone } = useChecklist()
+  const [toast, setToast] = useState<string | null>(null)
   const photoCount = photos.length
   const parts: string[] = []
   if (photoCount > 0) {
@@ -38,6 +38,12 @@ export function CompletePage() {
     parts.length <= 1
       ? parts[0] ?? 'move-in details'
       : `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`
+
+  useEffect(() => {
+    if (!toast) return
+    const t = window.setTimeout(() => setToast(null), 2200)
+    return () => window.clearTimeout(t)
+  }, [toast])
 
   return (
     <div className="space-y-6">
@@ -104,30 +110,35 @@ export function CompletePage() {
         </div>
 
         {COMING_SOON.map(({ title, icon: Icon }) => (
-          <div
+          <button
             key={title}
+            type="button"
+            onClick={() => setToast('Coming soon')}
             className={cn(
-              'rounded-xl border border-dashed border-border/70 bg-card/50 p-4 opacity-80',
+              'rounded-xl border border-border/80 bg-card/90 p-4 text-left shadow-sm transition-colors',
+              'hover:border-primary/35 hover:bg-card',
             )}
           >
             <div className="flex items-start gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
                 <Icon className="size-4" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="font-medium text-muted-foreground">{title}</h2>
-                  <Badge variant="secondary" className="h-5 gap-1 text-[10px] font-normal">
-                    <Lock className="size-2.5" />
-                    Coming soon
-                  </Badge>
-                </div>
-                <p className="mt-0.5 text-sm text-muted-foreground">Not available in this demo.</p>
+                <h2 className="font-medium">{title}</h2>
               </div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
+
+      {toast && (
+        <div
+          role="status"
+          className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full border border-border/80 bg-card px-4 py-2 text-sm font-medium text-foreground shadow-md animate-soft-rise"
+        >
+          {toast}
+        </div>
+      )}
     </div>
   )
 }

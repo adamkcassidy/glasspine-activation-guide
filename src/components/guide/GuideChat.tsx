@@ -240,7 +240,8 @@ export function GuideChat({ className }: GuideChatProps) {
       </div>
 
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-3">
-        <div className="flex flex-col gap-3 py-3">
+        {/* min-h-full + justify-end anchors the thread to the bottom; grows upward */}
+        <div className="flex min-h-full flex-col justify-end gap-3 py-3">
           {messages.map((m) => (
             <div
               key={m.id}
