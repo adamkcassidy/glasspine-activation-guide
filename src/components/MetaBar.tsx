@@ -20,7 +20,7 @@ export function MetaBar() {
 
   return (
     <div className="w-full border-b border-primary/30 bg-primary text-primary-foreground">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 sm:px-6">
+      <div className="mx-auto flex max-w-[960px] flex-wrap items-center justify-between gap-2 px-4 py-1.5 sm:px-6">
         <p className="text-[10px] font-medium uppercase tracking-wider text-primary-foreground/70">
           Design exercise
         </p>

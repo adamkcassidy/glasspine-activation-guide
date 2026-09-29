@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { CheckCircle2, ChevronDown, Loader2, Phone, Send, Sparkles } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Camera, Loader2, Phone, Send, Sparkles } from 'lucide-react'
 import { askGuide, delay } from '@/lib/guide-client'
 import { getSuggestedChips, type GuideScene } from '@/lib/guide-scripts'
 import { resolveMaintenanceTurn } from '@/lib/maintenance-turn'
@@ -89,12 +89,12 @@ function MessageCard({ card }: { card: ChatCard }) {
         </div>
       </div>
       {card.photoSrc && (
-        <div className="overflow-hidden rounded-lg border border-border/70">
-          <img
-            src={card.photoSrc}
-            alt="Issue photo"
-            className="aspect-video w-full object-cover"
-          />
+        <div className="relative aspect-video overflow-hidden rounded-lg border border-border/80 bg-muted/60">
+          <div className="flex size-full flex-col items-center justify-center gap-1.5 bg-muted/80 px-2 text-center">
+            <Camera className="size-5 text-muted-foreground/70" />
+            <span className="text-[11px] font-medium text-muted-foreground">Issue photo</span>
+            <span className="text-[10px] text-muted-foreground/80">Kitchen · attached</span>
+          </div>
         </div>
       )}
     </div>
