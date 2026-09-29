@@ -60,7 +60,7 @@ Rules:
 - When explaining move-in photos: a dated photo record of unit condition on move-in day gives the resident and property manager the same reference point if questions come up later.`
 }
 
-const GUIDE_MODEL = 'gemini-2.5-flash' as const
+const GUIDE_MODEL = 'gemini-3.8-flash' as const
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
