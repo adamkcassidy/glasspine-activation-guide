@@ -118,7 +118,7 @@ export function NotificationSetup() {
               aria-label="Download on the App Store"
             >
               <img
-                src="/app-store-badge.png"
+                src="/app-store-badge.svg"
                 alt="Download on the App Store"
                 className="h-10 w-auto"
               />
