@@ -8,19 +8,19 @@ const TILES = [
     label: 'Photos',
     icon: Camera,
     description:
-      'Protect your deposit with a shared, timestamped record of unit condition — you and your property manager start from the same reference point if anything comes up later.',
+      'Protect your deposit with a shared record you and your manager both trust.',
   },
   {
     label: 'Notifications',
     icon: Bell,
     description:
-      'Stay in the loop for the whole tenancy — maintenance updates, rent reminders, and anything that needs your attention, not just move-in week.',
+      'Stay in the loop all tenancy — maintenance, rent reminders, and more.',
   },
   {
     label: 'Autopay',
     icon: Building2,
     description:
-      'Never miss a rent payment. Connect once and drafts land on time so late fees stay off your radar.',
+      'Never miss rent — connect once so drafts land on time, no late fees.',
   },
 ] as const
 

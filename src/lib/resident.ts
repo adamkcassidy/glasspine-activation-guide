@@ -4,6 +4,8 @@ export const RESIDENT = {
   fullName: 'Jordan Hale',
   unit: 'Apt 4B',
   community: 'Oak Street Residences',
+  email: 'jordan.hale@email.com',
+  phoneDisplay: '(415) 555-4821',
 } as const
 
 export const ROOM_LABELS = [

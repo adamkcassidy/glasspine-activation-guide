@@ -24,25 +24,25 @@ const FUNNEL = [
     step: 'Notification opened',
     pct: '72%',
     why: 'Shows whether the first welcome message is even seen.',
-    benefit: 'Residents who see the invite know there’s a short path forward.',
+    benefit: 'You see the invite and know there’s a short path forward.',
   },
   {
     step: 'Checklist started',
     pct: '54%',
     why: 'Marks the jump from awareness to action.',
-    benefit: 'They’ve begun protecting their deposit and setting up rent.',
+    benefit: 'You’re protecting your deposit and setting up rent.',
   },
   {
     step: 'All three items done',
     pct: '38%',
     why: 'Our activation definition — photos, notifications, autopay.',
-    benefit: 'Unit documented, alerts on, rent on autopilot — settled in.',
+    benefit: 'Unit documented, alerts on, rent on autopilot — you’re settled in.',
   },
   {
     step: 'Active at 7 days',
     pct: '31%',
     why: 'Confirms activation sticks past the first busy week.',
-    benefit: 'They’re using the home tools they’ll need for the whole lease.',
+    benefit: 'You’ve got the home tools you’ll need for the whole lease.',
   },
 ] as const
 
@@ -50,17 +50,17 @@ const DOWNSTREAM = [
   {
     metric: 'Share of first maintenance requests correctly classified (emergency vs routine)',
     why: 'Tests whether Guide’s triage actually improves the first filed request.',
-    benefit: 'Faster help for real emergencies; fewer false alarms that delay routine fixes.',
+    benefit: 'Get the right help faster — real emergencies prioritized, routine fixes on track.',
   },
   {
     metric: 'Renewal rate among activated vs non-activated residents (trailing 12 months)',
     why: 'Checks whether early activation predicts a healthier lease relationship.',
-    benefit: 'Residents who feel set up from day one are more likely to stay.',
+    benefit: 'Feel set up from day one — a home experience worth staying for.',
   },
   {
     metric: 'Referral submissions from activated residents',
     why: 'A lagging signal that activated residents recommend Oak Street.',
-    benefit: 'Neighbors who had a smooth start become the best advocates.',
+    benefit: 'Had a smooth start? Easy to recommend Oak Street to a friend.',
   },
 ] as const
 
@@ -116,25 +116,34 @@ export function MeasurePage() {
           <p className="text-[11px] font-medium uppercase tracking-wider text-primary/80">
             Resident persona
           </p>
-          <p className="mt-1 font-medium text-foreground">Jordan Hale · Apt 4B</p>
-          <dl className="mt-2 space-y-1 text-sm text-muted-foreground">
-            <div>
-              <dt className="inline font-medium text-foreground">Goals: </dt>
-              <dd className="inline">Protect the deposit, never miss rent, feel oriented fast.</dd>
+          <div className="mt-2 flex items-start gap-3">
+            <img
+              src="/jordan-hale.jpg"
+              alt="Jordan Hale"
+              className="size-14 shrink-0 rounded-full object-cover ring-2 ring-primary/20"
+            />
+            <div className="min-w-0">
+              <p className="font-medium text-foreground">Jordan Hale · Apt 4B</p>
+              <dl className="mt-2 space-y-1 text-sm text-muted-foreground">
+                <div>
+                  <dt className="inline font-medium text-foreground">Goals: </dt>
+                  <dd className="inline">Protect the deposit, never miss rent, feel oriented fast.</dd>
+                </div>
+                <div>
+                  <dt className="inline font-medium text-foreground">Frustrations: </dt>
+                  <dd className="inline">
+                    Dense welcome emails, unclear first step, surprises when something breaks.
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline font-medium text-foreground">Tech comfort: </dt>
+                  <dd className="inline">
+                    Phone-first; fine with apps and SMS, skips long email threads.
+                  </dd>
+                </div>
+              </dl>
             </div>
-            <div>
-              <dt className="inline font-medium text-foreground">Frustrations: </dt>
-              <dd className="inline">
-                Dense welcome emails, unclear first step, surprises when something breaks.
-              </dd>
-            </div>
-            <div>
-              <dt className="inline font-medium text-foreground">Tech comfort: </dt>
-              <dd className="inline">
-                Phone-first; fine with apps and SMS, skips long email threads.
-              </dd>
-            </div>
-          </dl>
+          </div>
         </aside>
 
         <ul className="space-y-3">

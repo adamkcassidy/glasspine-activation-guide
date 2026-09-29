@@ -65,6 +65,7 @@ export type MaintenancePhase =
   | 'clarifying'
   | 'emergency_handoff'
   | 'drafting'
+  | 'confirming'
   | 'submitted'
 
 export type MaintenanceDraft = {
@@ -75,6 +76,14 @@ export type MaintenanceDraft = {
   permissionToEnter: boolean
   ticketId: string | null
   submittedAt: string | null
+}
+
+/** Persists on the Maintenance page after chat submit, until a new report starts. */
+export type SubmittedMaintenanceRequest = {
+  ticketId: string
+  issue: string
+  priority: 'routine' | 'emergency'
+  submittedAt: string
 }
 
 export type ChecklistState = {
@@ -101,9 +110,12 @@ export type ChecklistState = {
   beginMaintenanceClarifying: (issue?: string) => void
   chooseMaintenanceEmergency: () => void
   chooseMaintenanceRoutine: () => void
+  prepareMaintenanceConfirm: (permissionToEnter: boolean) => void
   submitMaintenanceRequest: () => string
   resetMaintenance: () => void
   startMaintenanceReport: () => void
+  /** Last filed request — survives draft resets so the page confirmation card stays visible. */
+  submittedRequest: SubmittedMaintenanceRequest | null
   // Chat / demo session
   messages: ChatMessage[]
   chips: string[]
@@ -118,6 +130,8 @@ export type ChecklistState = {
   resetDemo: () => void
   /** Boots Guide for a route without wiping checklist progress. */
   bootGuideForPath: (pathname: string) => void
+  /** True once the resident has opened Guide chat at least once this session. */
+  chatOpenedThisSession: boolean
 }
 
 const ChecklistContext = createContext<ChecklistState | null>(null)
@@ -160,12 +174,21 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
 
   const [maintenancePhase, setMaintenancePhase] = useState<MaintenancePhase>('listening')
   const [maintenanceDraft, setMaintenanceDraft] = useState<MaintenanceDraft>(emptyDraft)
+  const [submittedRequest, setSubmittedRequest] = useState<SubmittedMaintenanceRequest | null>(
+    null,
+  )
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [chips, setChips] = useState<string[]>([])
   const [lastSource, setLastSource] = useState<'live' | 'scripted' | null>(null)
-  const [chatCollapsed, setChatCollapsed] = useState(false)
+  const [chatCollapsed, setChatCollapsedState] = useState(false)
+  const [chatOpenedThisSession, setChatOpenedThisSession] = useState(false)
   const [pendingBoot, setPendingBoot] = useState<string[] | null>(null)
+
+  const setChatCollapsed = useCallback((collapsed: boolean) => {
+    if (!collapsed) setChatOpenedThisSession(true)
+    setChatCollapsedState(collapsed)
+  }, [])
 
   const checklistRef = useRef({
     photosDone: false,
@@ -173,6 +196,9 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     autopay: null as AutopayInfo | null,
   })
   checklistRef.current = { photosDone, notificationsDone, autopay }
+
+  const draftRef = useRef(maintenanceDraft)
+  draftRef.current = maintenanceDraft
 
   const addRoomPhotos = useCallback(() => {
     setPhotos(buildRoomPhotos())
@@ -234,13 +260,37 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     setMaintenancePhase('drafting')
   }, [])
 
+  const prepareMaintenanceConfirm = useCallback((permissionToEnter: boolean) => {
+    setMaintenanceDraft((prev) => {
+      const next = {
+        ...prev,
+        permissionToEnter,
+        priority: 'routine' as const,
+        issue: prev.issue || 'Kitchen faucet dripping',
+        photoSrc: prev.photoSrc || '/rooms/room-1.jpg',
+        ticketId: null,
+        submittedAt: null,
+      }
+      draftRef.current = next
+      return next
+    })
+    setMaintenancePhase('confirming')
+  }, [])
+
   const submitMaintenanceRequest = useCallback(() => {
+    const prev = draftRef.current
     const ticketId = `WO-${Math.floor(10000 + Math.random() * 90000)}`
-    setMaintenanceDraft((prev) => ({
+    const submittedAt = new Date().toISOString()
+    const issue = prev.issue || 'Kitchen faucet dripping'
+    const priority = prev.priority || 'routine'
+    setMaintenanceDraft({
       ...prev,
+      issue,
+      priority,
       ticketId,
-      submittedAt: new Date().toISOString(),
-    }))
+      submittedAt,
+    })
+    setSubmittedRequest({ ticketId, issue, priority, submittedAt })
     setMaintenancePhase('submitted')
     return ticketId
   }, [])
@@ -254,6 +304,7 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     const { photosDone: pd, notificationsDone: nd, autopay: ap } = checklistRef.current
     const checklistComplete = pd && nd && ap !== null
 
+    setSubmittedRequest(null)
     setChatCollapsed(false)
     setMaintenancePhase('listening')
     setMaintenanceDraft(emptyDraft())
@@ -263,7 +314,7 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     setPendingBoot(
       checklistComplete ? [...MAINTENANCE_READY_PROACTIVE] : [...MAINTENANCE_PROACTIVE],
     )
-  }, [])
+  }, [setChatCollapsed])
 
   const clearPendingBoot = useCallback(() => {
     setPendingBoot(null)
@@ -277,12 +328,14 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     setAutopay(null)
     setMaintenancePhase('listening')
     setMaintenanceDraft(emptyDraft())
+    setSubmittedRequest(null)
     setMessages([])
     setChips([])
     setLastSource(null)
+    setChatOpenedThisSession(false)
     setChatCollapsed(false)
     setPendingBoot([...WELCOME_SEQUENCE])
-  }, [])
+  }, [setChatCollapsed])
 
   function sceneFromPath(pathname: string): GuideScene {
     if (pathname.startsWith('/checklist')) return 'checklist'
@@ -309,9 +362,12 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     const scene = sceneFromPath(pathname)
 
     if (scene === 'maintenance') {
-      setChatCollapsed(true)
-      setMaintenancePhase('listening')
-      setMaintenanceDraft(emptyDraft())
+      // Collapse chat so Report an issue starts the flow; keep any filed confirmation card.
+      setChatCollapsedState(true)
+      setMaintenancePhase((phase) => (phase === 'submitted' ? phase : 'listening'))
+      setMaintenanceDraft((draft) =>
+        draft.ticketId && draft.submittedAt ? draft : emptyDraft(),
+      )
     }
 
     switch (scene) {
@@ -368,13 +424,16 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       beginMaintenanceClarifying,
       chooseMaintenanceEmergency,
       chooseMaintenanceRoutine,
+      prepareMaintenanceConfirm,
       submitMaintenanceRequest,
       resetMaintenance,
       startMaintenanceReport,
+      submittedRequest,
       messages,
       chips,
       lastSource,
       chatCollapsed,
+      chatOpenedThisSession,
       pendingBoot,
       setMessages,
       setChips,
@@ -405,14 +464,18 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       beginMaintenanceClarifying,
       chooseMaintenanceEmergency,
       chooseMaintenanceRoutine,
+      prepareMaintenanceConfirm,
       submitMaintenanceRequest,
       resetMaintenance,
       startMaintenanceReport,
+      submittedRequest,
       messages,
       chips,
       lastSource,
       chatCollapsed,
+      chatOpenedThisSession,
       pendingBoot,
+      setChatCollapsed,
       clearPendingBoot,
       resetDemo,
       bootGuideForPath,

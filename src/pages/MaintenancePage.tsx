@@ -14,8 +14,7 @@ function formatSubmittedAt(iso: string) {
 }
 
 export function MaintenancePage() {
-  const { maintenancePhase, maintenanceDraft, startMaintenanceReport } = useChecklist()
-  const submitted = maintenancePhase === 'submitted' && maintenanceDraft.ticketId
+  const { submittedRequest, startMaintenanceReport } = useChecklist()
 
   return (
     <div className="space-y-4 animate-soft-rise max-w-lg">
@@ -34,7 +33,7 @@ export function MaintenancePage() {
         Report an issue
       </Button>
 
-      {submitted && (
+      {submittedRequest && (
         <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 shadow-sm animate-soft-rise">
           <div className="flex items-center gap-2 text-primary">
             <CheckCircle2 className="size-4 shrink-0" />
@@ -43,23 +42,19 @@ export function MaintenancePage() {
           <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
             <div>
               <dt className="text-xs text-muted-foreground">Ticket ID</dt>
-              <dd className="font-medium tabular-nums">{maintenanceDraft.ticketId}</dd>
+              <dd className="font-medium tabular-nums">{submittedRequest.ticketId}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Category</dt>
-              <dd className="font-medium">{maintenanceDraft.issue || 'Maintenance'}</dd>
+              <dd className="font-medium">{submittedRequest.issue}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Priority</dt>
-              <dd className="font-medium capitalize">{maintenanceDraft.priority}</dd>
+              <dd className="font-medium capitalize">{submittedRequest.priority}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Submitted</dt>
-              <dd className="font-medium">
-                {maintenanceDraft.submittedAt
-                  ? formatSubmittedAt(maintenanceDraft.submittedAt)
-                  : 'Just now'}
-              </dd>
+              <dd className="font-medium">{formatSubmittedAt(submittedRequest.submittedAt)}</dd>
             </div>
           </dl>
           <p className="mt-3 text-sm text-muted-foreground">

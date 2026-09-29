@@ -1,18 +1,26 @@
-import { Bell, Check, Smartphone } from 'lucide-react'
+import { Apple, Bell, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useChecklist } from '@/lib/checklist-state'
+import { RESIDENT } from '@/lib/resident'
 import { cn } from '@/lib/utils'
 
-const CHANNELS: { key: 'email' | 'sms'; label: string; hint: string }[] = [
+const CHANNELS: {
+  key: 'email' | 'sms'
+  label: string
+  hint: string
+  contact: string
+}[] = [
   {
     key: 'email',
     label: 'Email',
-    hint: 'Checklist reminders and move-in tips in your inbox',
+    hint: 'Inbox updates for maintenance, rent, and anything that needs you.',
+    contact: `Sending to ${RESIDENT.email}`,
   },
   {
     key: 'sms',
     label: 'SMS',
-    hint: 'Short text reminders if a step is still open',
+    hint: 'Text alerts so nothing important slips by while you’re busy.',
+    contact: `Texting ${RESIDENT.phoneDisplay}`,
   },
 ]
 
@@ -60,7 +68,7 @@ export function NotificationSetup() {
         reminders for as long as you live here.
       </p>
       <div className="flex flex-col gap-2">
-        {CHANNELS.map(({ key, label, hint }) => (
+        {CHANNELS.map(({ key, label, hint, contact }) => (
           <button
             key={key}
             type="button"
@@ -85,6 +93,7 @@ export function NotificationSetup() {
             <span>
               <span className="font-medium">{label}</span>
               <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>
+              <span className="mt-1 block text-xs font-medium text-foreground/80">{contact}</span>
             </span>
           </button>
         ))}
@@ -92,9 +101,6 @@ export function NotificationSetup() {
 
       <div className="rounded-lg border border-border/80 bg-muted/30 px-3 py-3">
         <div className="flex items-start gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-            <Smartphone className="size-4" />
-          </span>
           <div className="min-w-0 flex-1 space-y-2">
             <div>
               <p className="text-sm font-medium">Want instant alerts?</p>
@@ -106,21 +112,19 @@ export function NotificationSetup() {
               type="button"
               onClick={downloadApp}
               className={cn(
-                'inline-flex items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors',
+                'inline-flex items-center gap-2.5 rounded-xl px-3.5 py-2 text-left transition-colors',
                 notifications.push
-                  ? 'bg-primary/10 text-primary'
-                  : 'bg-foreground text-background hover:bg-foreground/90',
+                  ? 'bg-primary/10 text-primary ring-1 ring-primary/25'
+                  : 'bg-neutral-950 text-white hover:bg-neutral-900',
               )}
             >
-              <span className="flex size-7 items-center justify-center rounded-md bg-background/15">
-                <Smartphone className="size-3.5" />
-              </span>
+              <Apple className="size-7 shrink-0" strokeWidth={1.5} />
               <span className="leading-tight">
-                <span className="block text-[10px] opacity-80">
-                  {notifications.push ? 'Ready on your phone' : 'Get it on'}
+                <span className="block text-[9px] font-medium uppercase tracking-wide opacity-80">
+                  {notifications.push ? 'Ready on your phone' : 'Download on the'}
                 </span>
-                <span className="block text-sm font-semibold tracking-tight">
-                  {notifications.push ? 'Glasspine App' : 'Glasspine App Store'}
+                <span className="block text-[15px] font-semibold tracking-tight">
+                  {notifications.push ? 'Glasspine App' : 'App Store'}
                 </span>
               </span>
               {notifications.push && <Check className="ml-1 size-3.5 shrink-0" />}

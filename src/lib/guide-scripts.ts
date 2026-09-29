@@ -75,12 +75,25 @@ const CHIP_REPLIES: Record<string, ScriptedReply> = {
     chips: ['Yes, you can enter', "I'd rather be home", 'Attach a photo'],
   },
   'Yes, you can enter': {
-    text: 'Permission to enter noted. Filing your request now.',
-    chips: ['What counts as emergency?'],
+    text: "Here’s what I’m about to submit:\n• Kitchen faucet dripping\n• Priority: routine\n• OK to enter if you’re not home\n\nSubmit this?",
+    chips: ['Yes, submit it', 'Edit something'],
   },
   "I'd rather be home": {
-    text: 'Got it — we’ll note that you’d prefer to be home. Filing your request now.',
-    chips: ['What counts as emergency?'],
+    text: "Here’s what I’m about to submit:\n• Kitchen faucet dripping\n• Priority: routine\n• Prefer you be home before entry\n\nSubmit this?",
+    chips: ['Yes, submit it', 'Edit something'],
+  },
+  'Yes, submit it': {
+    text: 'Filed as routine. Your confirmation is on the Maintenance page — you’ll get email and SMS updates on this request.',
+    chips: ['What counts as emergency?', 'Kitchen faucet dripping'],
+  },
+  'Edit something': {
+    text: 'No problem — what should we change? We can adjust urgency, entry permission, or start over with the issue.',
+    chips: [
+      "It's an emergency",
+      'Routine — sink is dripping',
+      'Yes, you can enter',
+      "I'd rather be home",
+    ],
   },
   'Attach a photo': {
     text: 'Photo attached from your kitchen. Still okay if we enter when you’re out?',

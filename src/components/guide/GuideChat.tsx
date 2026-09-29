@@ -123,6 +123,7 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
     beginMaintenanceClarifying,
     chooseMaintenanceEmergency,
     chooseMaintenanceRoutine,
+    prepareMaintenanceConfirm,
     submitMaintenanceRequest,
     updateMaintenanceDraft,
     setMessages,
@@ -215,6 +216,11 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
       const isEntryYes = /yes, you can enter/i.test(trimmed)
       const isEntryNo = /i'?d rather be home/i.test(trimmed)
       const isAttachPhoto = /attach a photo/i.test(trimmed)
+      const isConfirmSubmit =
+        /yes, submit it/i.test(trimmed) ||
+        /submit this\??/i.test(trimmed) ||
+        /^submit$/i.test(trimmed)
+      const isEditSomething = /edit something/i.test(trimmed)
 
       if (isEmergencyPhrase) {
         if (/gas|fire|flood|spark|no heat/i.test(trimmed) && !/it'?s an emergency/i.test(trimmed)) {
@@ -277,11 +283,32 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
 
       if (isEntryYes || isEntryNo) {
         const permissionToEnter = isEntryYes
+        prepareMaintenanceConfirm(permissionToEnter)
+        const issue = maintenanceDraft.issue || 'Kitchen faucet dripping'
+        const entryLine = permissionToEnter
+          ? 'OK to enter if you’re not home'
+          : 'Prefer you be home before entry'
+        setMessages((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), role: 'user', content: trimmed },
+        ])
+        setInput('')
+        setTyping(true)
+        await delay(400)
+        setTyping(false)
+        pushAssistant(
+          `Here’s what I’m about to submit:\n• ${issue}\n• Priority: routine\n• ${entryLine}\n\nSubmit this?`,
+          undefined,
+          ['Yes, submit it', 'Edit something'],
+        )
+        return
+      }
+
+      if (isConfirmSubmit) {
         const issue = maintenanceDraft.issue || 'Kitchen faucet dripping'
         const location = maintenanceDraft.location || 'Apt 4B kitchen'
         const photoSrc = maintenanceDraft.photoSrc
-        updateMaintenanceDraft({ permissionToEnter })
-        chooseMaintenanceRoutine()
+        const permissionToEnter = maintenanceDraft.permissionToEnter
         const ticketId = submitMaintenanceRequest()
         setMessages((prev) => [
           ...prev,
@@ -303,6 +330,29 @@ export function GuideChat({ className, onCollapse }: GuideChatProps) {
             photoSrc,
           },
           ['What counts as emergency?', 'Kitchen faucet dripping'],
+        )
+        return
+      }
+
+      if (isEditSomething) {
+        chooseMaintenanceRoutine()
+        setMessages((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), role: 'user', content: trimmed },
+        ])
+        setInput('')
+        setTyping(true)
+        await delay(350)
+        setTyping(false)
+        pushAssistant(
+          'No problem — what should we change? We can adjust urgency, entry permission, or start over with the issue.',
+          undefined,
+          [
+            "It's an emergency",
+            'Routine — sink is dripping',
+            'Yes, you can enter',
+            "I'd rather be home",
+          ],
         )
         return
       }
