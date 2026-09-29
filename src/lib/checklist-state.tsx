@@ -36,11 +36,24 @@ export type AutopayInfo = {
   accountLabel: string
 }
 
+export type ChatCard =
+  | {
+      kind: 'maintenance_ticket'
+      ticketId: string
+      issue: string
+      location: string
+      priority: 'routine' | 'emergency'
+    }
+  | {
+      kind: 'emergency_handoff'
+    }
+
 export type ChatMessage = {
   id: string
   role: 'assistant' | 'user'
   content: string
   source?: 'live' | 'scripted'
+  card?: ChatCard
 }
 
 export type MaintenancePhase =
@@ -74,7 +87,7 @@ export type ChecklistState = {
   completePhotos: () => void
   setNotificationPrefs: (prefs: NotificationPrefs) => void
   completeNotifications: () => void
-  completeAutopay: () => void
+  completeAutopay: (accountLabel?: string) => void
   // Maintenance
   maintenancePhase: MaintenancePhase
   maintenanceDraft: MaintenanceDraft
@@ -83,7 +96,7 @@ export type ChecklistState = {
   beginMaintenanceClarifying: (issue?: string) => void
   chooseMaintenanceEmergency: () => void
   chooseMaintenanceRoutine: () => void
-  submitMaintenanceRequest: () => void
+  submitMaintenanceRequest: () => string
   resetMaintenance: () => void
   // Chat / demo session
   messages: ChatMessage[]
@@ -134,7 +147,7 @@ function seedAutopay(): AutopayInfo {
   return {
     connected: true,
     draftDay: RENT_DUE_DAY,
-    accountLabel: 'Bank account connected',
+    accountLabel: 'Checking ••1234 connected',
   }
 }
 
@@ -181,8 +194,12 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     setNotificationsDone(true)
   }, [])
 
-  const completeAutopay = useCallback(() => {
-    setAutopay(seedAutopay())
+  const completeAutopay = useCallback((accountLabel = 'Checking ••1234 connected') => {
+    setAutopay({
+      connected: true,
+      draftDay: RENT_DUE_DAY,
+      accountLabel,
+    })
   }, [])
 
   const updateMaintenanceDraft = useCallback((patch: Partial<MaintenanceDraft>) => {
@@ -218,6 +235,7 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     const ticketId = `WO-${Math.floor(10000 + Math.random() * 90000)}`
     setMaintenanceDraft((prev) => ({ ...prev, ticketId }))
     setMaintenancePhase('submitted')
+    return ticketId
   }, [])
 
   const resetMaintenance = useCallback(() => {
@@ -286,13 +304,8 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
         setNotifications(seedNotifications())
         setNotificationsDone(true)
         setAutopay(seedAutopay())
-        setMaintenanceDraft({
-          ...emptyDraft(),
-          issue: 'Kitchen faucet dripping',
-          location: 'Apt 4B kitchen',
-          photoSrc: '/rooms/room-1.jpg',
-        })
-        setMaintenancePhase('clarifying')
+        setMaintenancePhase('listening')
+        setMaintenanceDraft(emptyDraft())
         setPendingBoot([...MAINTENANCE_PROACTIVE])
         break
       case 'nudges':

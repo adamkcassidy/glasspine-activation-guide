@@ -25,7 +25,7 @@ const SCENE_CONTEXT: Record<Scene, string> = {
   complete:
     'The resident finished the checklist. Their move-in record is saved. They are on Dashboard — rent, maintenance, and coming-soon actions.',
   maintenance:
-    'The resident may have a maintenance issue. Ask 1–2 clarifying questions, triage emergency vs routine. True emergencies: direct them to call 555-0142 first. For routine, help them complete a clear request.',
+    'The resident may have a maintenance issue. Handle the full triage in chat: ask what is wrong, then emergency vs routine. True emergencies: direct them to call 555-0142 first and do not file a normal work order. For routine issues, submit the request yourself and confirm with a ticket reference in chat — there is no separate form on the page.',
   nudges:
     'The resident is viewing mocked activation nudges (email/SMS/push). These only reach residents who opted into notifications on the checklist. Explain the intent of timely reminders; do not claim messages were actually sent.',
   measure:

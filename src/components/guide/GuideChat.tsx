@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Loader2, Send, Sparkles } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Loader2, Phone, Send, Sparkles } from 'lucide-react'
 import { askGuide, delay } from '@/lib/guide-client'
 import { getSuggestedChips, type GuideScene } from '@/lib/guide-scripts'
-import { useChecklist, type ChatMessage } from '@/lib/checklist-state'
+import {
+  useChecklist,
+  type ChatCard,
+  type ChatMessage,
+} from '@/lib/checklist-state'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -48,11 +52,54 @@ function TypingDots() {
   )
 }
 
-type GuideChatProps = {
-  className?: string
+function MessageCard({ card }: { card: ChatCard }) {
+  if (card.kind === 'emergency_handoff') {
+    return (
+      <div className="mt-2 space-y-2 rounded-xl border border-destructive/30 bg-background/80 p-3 text-sm">
+        <div className="flex items-start gap-2">
+          <Phone className="mt-0.5 size-4 shrink-0 text-destructive" />
+          <div>
+            <p className="font-medium">Call 555-0142 now</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+              Gas, fire, flooding, no heat in winter, or sparking outlets — contact on-call
+              maintenance before filing a normal request.
+            </p>
+          </div>
+        </div>
+        <Button type="button" size="sm" asChild className="w-full sm:w-auto">
+          <a href="tel:5550142">
+            <Phone className="size-3.5" />
+            Call 555-0142
+          </a>
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-2 space-y-1.5 rounded-xl border border-primary/25 bg-background/80 p-3 text-sm">
+      <div className="flex items-start gap-2">
+        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+        <div>
+          <p className="font-medium">Request submitted · {card.ticketId}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            {card.issue} · {card.location} · {card.priority}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Expected response within 1–2 business days for routine jobs.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-export function GuideChat({ className }: GuideChatProps) {
+type GuideChatProps = {
+  className?: string
+  onCollapse?: () => void
+}
+
+export function GuideChat({ className, onCollapse }: GuideChatProps) {
   const location = useLocation()
   const scene = sceneFromPath(location.pathname)
   const {
@@ -66,10 +113,12 @@ export function GuideChat({ className }: GuideChatProps) {
     completedCount,
     totalCount,
     maintenancePhase,
+    maintenanceDraft,
     beginMaintenanceClarifying,
     chooseMaintenanceEmergency,
     chooseMaintenanceRoutine,
     submitMaintenanceRequest,
+    lastSource,
     setMessages,
     setChips,
     setLastSource,
@@ -128,55 +177,90 @@ export function GuideChat({ className }: GuideChatProps) {
     el.scrollTop = el.scrollHeight
   }, [messages, typing])
 
-  function applyMaintenanceSideEffects(trimmed: string) {
-    if (scene !== 'maintenance') return false
-
-    if (/gas smell|fire|flood|spark|no heat/i.test(trimmed) || /gas smell \/ emergency/i.test(trimmed)) {
-      beginMaintenanceClarifying(/gas/i.test(trimmed) ? 'Possible gas smell' : trimmed)
-      chooseMaintenanceEmergency()
-      return false
-    }
-    if (/kitchen faucet|dripping|leak|broken|appliance/i.test(trimmed)) {
-      beginMaintenanceClarifying(
-        /faucet|drip/i.test(trimmed) ? 'Kitchen faucet dripping' : trimmed,
-      )
-      return false
-    }
-    if (/it'?s an emergency|submit as emergency/i.test(trimmed)) {
-      chooseMaintenanceEmergency()
-      return false
-    }
-    if (/routine|not that urgent|i can shut it off/i.test(trimmed)) {
-      chooseMaintenanceRoutine()
-      return false
-    }
-    if (/submit/i.test(trimmed) && maintenancePhase === 'drafting') {
-      submitMaintenanceRequest()
-      setInput('')
-      setMessages((prev) => [
-        ...prev,
-        { id: crypto.randomUUID(), role: 'user', content: trimmed },
-        {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content:
-            'Request submitted. Expect a response within 1–2 business days — you can track it from the confirmation card.',
-          source: 'scripted',
-        },
-      ])
-      setChips(['What counts as emergency?'])
-      setLastSource('scripted')
-      return true
-    }
-    return false
+  function pushAssistant(content: string, card?: ChatCard, chipsNext?: string[]) {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content,
+        source: 'scripted',
+        card,
+      },
+    ])
+    setLastSource('scripted')
+    if (chipsNext) setChips(chipsNext)
   }
 
   async function send(text: string) {
     const trimmed = text.trim()
     if (!trimmed || typing || booting) return
 
-    // Maintenance side effects (triage UI); early return only for submit shortcut
-    if (applyMaintenanceSideEffects(trimmed)) return
+    if (scene === 'maintenance') {
+      const isEmergencyPhrase =
+        /gas smell|fire|flood|spark|no heat/i.test(trimmed) ||
+        /gas smell \/ emergency/i.test(trimmed) ||
+        /it'?s an emergency|submit as emergency/i.test(trimmed)
+
+      const isRoutinePhrase =
+        /routine|not that urgent|i can shut it off/i.test(trimmed) ||
+        /routine — sink is dripping/i.test(trimmed)
+
+      if (isEmergencyPhrase) {
+        if (/gas|fire|flood|spark|no heat/i.test(trimmed) && !/it'?s an emergency/i.test(trimmed)) {
+          beginMaintenanceClarifying(/gas/i.test(trimmed) ? 'Possible gas smell' : trimmed)
+        }
+        chooseMaintenanceEmergency()
+        setMessages((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), role: 'user', content: trimmed },
+        ])
+        setInput('')
+        setTyping(true)
+        await delay(400)
+        setTyping(false)
+        pushAssistant(
+          'This sounds like an emergency. Leave the unit if it feels unsafe and call 555-0142 immediately — I won’t file a normal work order until you’re safe.',
+          { kind: 'emergency_handoff' },
+          ["It's not that urgent", 'What counts as emergency?'],
+        )
+        return
+      }
+
+      if (isRoutinePhrase) {
+        const issue = maintenanceDraft.issue || 'Kitchen faucet dripping'
+        const location = maintenanceDraft.location || 'Apt 4B kitchen'
+        beginMaintenanceClarifying(issue)
+        chooseMaintenanceRoutine()
+        const ticketId = submitMaintenanceRequest()
+        setMessages((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), role: 'user', content: trimmed },
+        ])
+        setInput('')
+        setTyping(true)
+        await delay(450)
+        setTyping(false)
+        pushAssistant(
+          'Filed as routine. Here’s your confirmation — you can track it anytime from this ticket.',
+          {
+            kind: 'maintenance_ticket',
+            ticketId,
+            issue,
+            location,
+            priority: 'routine',
+          },
+          ['What counts as emergency?', 'Kitchen faucet dripping'],
+        )
+        return
+      }
+
+      if (/kitchen faucet|dripping|leak|broken|appliance/i.test(trimmed)) {
+        beginMaintenanceClarifying(
+          /faucet|drip/i.test(trimmed) ? 'Kitchen faucet dripping' : trimmed,
+        )
+      }
+    }
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -218,6 +302,8 @@ export function GuideChat({ className }: GuideChatProps) {
   }
 
   const busy = typing || booting
+  const sourceLabel =
+    lastSource === 'live' ? 'Live' : lastSource === 'scripted' ? 'Scripted' : null
 
   return (
     <div
@@ -228,19 +314,53 @@ export function GuideChat({ className }: GuideChatProps) {
     >
       <div className="flex shrink-0 items-center gap-2 border-b border-border/70 px-3 py-2.5">
         <GuideAvatar />
-        <div className="flex items-center gap-1.5 leading-tight">
-          <p className="text-sm font-medium">Glasspine Guide</p>
-          <Badge
-            variant="secondary"
-            className="h-4 rounded-md px-1.5 text-[9px] font-semibold tracking-wide uppercase"
-          >
-            AI
-          </Badge>
+        <div className="min-w-0 flex-1 leading-tight">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <p className="text-sm font-medium">Glasspine Guide</p>
+            <Badge
+              variant="secondary"
+              className="h-4 rounded-md px-1.5 text-[9px] font-semibold tracking-wide uppercase"
+            >
+              AI
+            </Badge>
+            {sourceLabel && (
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1 text-[10px] font-medium',
+                  lastSource === 'live' ? 'text-primary' : 'text-muted-foreground',
+                )}
+                title={
+                  lastSource === 'live'
+                    ? 'Last reply from Gemini'
+                    : 'Last reply used scripted fallback'
+                }
+              >
+                <span
+                  className={cn(
+                    'size-1.5 rounded-full',
+                    lastSource === 'live' ? 'bg-primary' : 'bg-muted-foreground/60',
+                  )}
+                />
+                {sourceLabel}
+              </span>
+            )}
+          </div>
         </div>
+        {onCollapse && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="shrink-0 rounded-full text-muted-foreground"
+            onClick={onCollapse}
+            aria-label="Collapse Guide"
+          >
+            <ChevronDown className="size-4" />
+          </Button>
+        )}
       </div>
 
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-3">
-        {/* min-h-full + justify-end anchors the thread to the bottom; grows upward */}
         <div className="flex min-h-full flex-col justify-end gap-3 py-3">
           {messages.map((m) => (
             <div
@@ -260,6 +380,7 @@ export function GuideChat({ className }: GuideChatProps) {
                 )}
               >
                 {m.content}
+                {m.card && <MessageCard card={m.card} />}
               </div>
             </div>
           ))}

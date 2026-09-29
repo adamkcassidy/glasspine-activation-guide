@@ -1,4 +1,4 @@
-import { ChevronDown, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { GuideChat } from '@/components/guide/GuideChat'
 import { Button } from '@/components/ui/button'
 import { useChecklist } from '@/lib/checklist-state'
@@ -32,20 +32,10 @@ export function GuideDock({ className }: { className?: string }) {
         className,
       )}
     >
-      <div className="relative min-h-0 flex-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="absolute right-1 top-1 z-10 h-7 gap-1 px-2 text-xs text-muted-foreground"
-          onClick={() => setChatCollapsed(true)}
-          aria-label="Collapse Guide"
-        >
-          <ChevronDown className="size-3.5" />
-          <span className="sr-only">Minimize</span>
-        </Button>
-        <GuideChat className="h-full shadow-lg" />
-      </div>
+      <GuideChat
+        className="h-full shadow-lg"
+        onCollapse={() => setChatCollapsed(true)}
+      />
     </div>
   )
 }

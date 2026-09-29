@@ -6,7 +6,7 @@ export function PineMark({ className }: { className?: string }) {
     <span
       role="img"
       aria-label="Glasspine"
-      className={cn('inline-block size-7 shrink-0 bg-primary', className)}
+      className={cn('inline-block size-11 shrink-0 bg-primary sm:size-12', className)}
       style={{
         maskImage: 'url(/pine-logo.svg)',
         WebkitMaskImage: 'url(/pine-logo.svg)',

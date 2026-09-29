@@ -1,5 +1,3 @@
-import { Badge } from '@/components/ui/badge'
-
 const QUOTES = [
   {
     who: 'New resident · illustrative',
@@ -32,9 +30,6 @@ export function MeasurePage() {
   return (
     <div className="space-y-8 animate-soft-rise max-w-2xl">
       <div>
-        <Badge variant="secondary" className="mb-2 font-normal">
-          Illustrative · fictional data
-        </Badge>
         <h1 className="font-serif text-2xl font-semibold tracking-tight sm:text-3xl">
           How we’d measure
         </h1>

@@ -13,7 +13,7 @@ const SCENES: { to: string; label: string; scene: GuideScene }[] = [
 
 export function DemoSwitcher() {
   const navigate = useNavigate()
-  const { lastSource, seedForScene } = useChecklist()
+  const { seedForScene } = useChecklist()
 
   function jumpTo(to: string, scene: GuideScene) {
     seedForScene(scene)
@@ -21,34 +21,29 @@ export function DemoSwitcher() {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1.5">
-      <nav
-        aria-label="Resident app"
-        className="flex flex-wrap items-center justify-end gap-0.5 rounded-full border border-border/70 bg-card/90 p-0.5 text-[11px] shadow-sm backdrop-blur"
-      >
-        {SCENES.map((scene) => (
-          <NavLink
-            key={scene.to}
-            to={scene.to}
-            end={scene.to === '/'}
-            onClick={(e) => {
-              e.preventDefault()
-              jumpTo(scene.to, scene.scene)
-            }}
-            className={({ isActive }) =>
-              cn(
-                'rounded-full px-2 py-1 font-medium text-muted-foreground transition-colors',
-                isActive && 'bg-primary text-primary-foreground',
-              )
-            }
-          >
-            {scene.label}
-          </NavLink>
-        ))}
-      </nav>
-      {lastSource === 'scripted' && (
-        <p className="text-[10px] text-muted-foreground/80">Demo mode · scripted replies</p>
-      )}
-    </div>
+    <nav
+      aria-label="Resident app"
+      className="flex flex-wrap items-center justify-end gap-0.5 rounded-full border border-border/70 bg-card/90 p-0.5 text-[11px] shadow-sm backdrop-blur"
+    >
+      {SCENES.map((scene) => (
+        <NavLink
+          key={scene.to}
+          to={scene.to}
+          end={scene.to === '/'}
+          onClick={(e) => {
+            e.preventDefault()
+            jumpTo(scene.to, scene.scene)
+          }}
+          className={({ isActive }) =>
+            cn(
+              'rounded-full px-2 py-1 font-medium text-muted-foreground transition-colors',
+              isActive && 'bg-primary text-primary-foreground',
+            )
+          }
+        >
+          {scene.label}
+        </NavLink>
+      ))}
+    </nav>
   )
 }

@@ -43,11 +43,11 @@ const CHIP_REPLIES: Record<string, ScriptedReply> = {
     chips: ['Why photos first?', 'Why turn on notifications?'],
   },
   'Show maintenance tip': {
-    text: "When something breaks, describe it here — I'll help classify emergency vs routine and gather location, photos, and entry permission. True emergencies: call 555-0142 first.",
+    text: "When something breaks, describe it in chat — I'll classify emergency vs routine and submit a clear request for you. True emergencies: call 555-0142 first.",
     chips: ['Show me maintenance', 'What counts as emergency?'],
   },
   'Show me maintenance': {
-    text: 'Head to the maintenance flow and tell me what’s going on. I’ll ask a couple of clarifying questions, then we’ll build the request together.',
+    text: 'Open Maintenance and tell me what’s going on. I’ll ask a couple of clarifying questions, then submit the request for you in this chat.',
     chips: ['What counts as emergency?'],
   },
   'What about renewals?': {
@@ -55,23 +55,23 @@ const CHIP_REPLIES: Record<string, ScriptedReply> = {
     chips: ['Show maintenance tip'],
   },
   'Submit a maintenance request': {
-    text: 'Tell me what’s wrong — leak, appliance, HVAC — and whether it feels urgent. I’ll triage and help you submit a clear request.',
+    text: 'Tell me what’s wrong — leak, appliance, HVAC — and whether it feels urgent. I’ll triage and submit a clear request right here.',
     chips: ['Kitchen faucet dripping', 'What counts as emergency?'],
   },
   'Kitchen faucet dripping': {
-    text: 'Got it — kitchen faucet drip. Is water pooling or can you shut it off under the sink? And is this an emergency or routine?',
-    chips: ["It's an emergency", 'Routine — sink is dripping', 'I can shut it off'],
+    text: 'Got it — kitchen faucet drip in Apt 4B. Is this an emergency, or routine?',
+    chips: ["It's an emergency", 'Routine — sink is dripping'],
   },
   "It's an emergency": {
-    text: 'If there’s active flooding, gas smell, fire, no heat in winter, or sparking outlets, call the emergency line 555-0142 right away. I’ll show the handoff on your screen.',
+    text: 'If there’s active flooding, gas smell, fire, no heat in winter, or sparking outlets, call 555-0142 right away. Don’t wait on a work-order form.',
     chips: ["It's not that urgent", 'What counts as emergency?'],
   },
   'Routine — sink is dripping': {
-    text: 'Sounds routine. I’ve opened a draft request — check location, priority, add a photo if you can, and set permission to enter, then submit.',
+    text: 'Sounds routine. I’ll file that for you now — kitchen faucet drip, Apt 4B kitchen, permission to enter if you’re out.',
     chips: ['What counts as emergency?'],
   },
   "It's not that urgent": {
-    text: 'Understood — we’ll treat it as routine. Review the draft request card, adjust details if needed, and submit when ready.',
+    text: 'Understood — treating it as routine. I’ll submit the request for you now.',
     chips: ['What counts as emergency?'],
   },
   'I can shut it off': {
@@ -79,7 +79,7 @@ const CHIP_REPLIES: Record<string, ScriptedReply> = {
     chips: ["It's an emergency", 'Routine — sink is dripping'],
   },
   'What counts as emergency?': {
-    text: 'Call 555-0142 first for gas smell, fire, active flooding, no heat in freezing weather, or sparking outlets. Everything else is usually routine and can go through a normal request.',
+    text: 'Call 555-0142 first for gas smell, fire, active flooding, no heat in freezing weather, or sparking outlets. Everything else is usually routine and I can file it here.',
     chips: ['Kitchen faucet dripping', 'Submit a maintenance request'],
   },
   'Submit as emergency': {
@@ -87,8 +87,8 @@ const CHIP_REPLIES: Record<string, ScriptedReply> = {
     chips: ["It's not that urgent"],
   },
   'Submit a request': {
-    text: 'Review the draft on the left — location, priority, photo, and entry permission — then tap Submit. Routine jobs usually get a response within 1–2 business days.',
-    chips: ['What counts as emergency?'],
+    text: 'Tell me the issue and whether it’s emergency or routine — I’ll submit it for you in this chat. Routine jobs usually get a response within 1–2 business days.',
+    chips: ['Kitchen faucet dripping', 'What counts as emergency?'],
   },
   'Gas smell / emergency': {
     text: 'Leave the unit if it feels unsafe and call 555-0142 immediately. Don’t wait on a work-order form for gas, fire, flooding, or sparking outlets.',
@@ -184,7 +184,7 @@ const INTENT_REPLIES: Record<GuideScene, Record<string, ScriptedReply>> = {
       chips: ['Submit a request', 'What counts as emergency?'],
     },
     default: {
-      text: "Tell me what's going on — leak, appliance, HVAC — and whether it feels urgent. I'll ask a couple of questions, then we'll build the request.",
+      text: "Tell me what's going on — leak, appliance, HVAC — or tap a chip. I’ll ask if it’s urgent, then submit the request for you right here in chat.",
       chips: ['Kitchen faucet dripping', 'What counts as emergency?', 'Gas smell / emergency'],
     },
   },
@@ -243,7 +243,7 @@ export const COMPLETE_SEED_MESSAGES = [
 
 export const MAINTENANCE_PROACTIVE = [
   `Hey Jordan — looks like something might need attention in Apt 4B.`,
-  `Tell me what's going on and whether it feels urgent. For gas, fire, flooding, or sparking outlets, call 555-0142 first.`,
+  `Tell me what's going on (or tap a chip). For gas, fire, flooding, or sparking outlets, call 555-0142 first — I'll help with everything else right here.`,
 ] as const
 
 export const NUDGES_SEED_MESSAGES = [

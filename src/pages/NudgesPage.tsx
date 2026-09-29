@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Bell, CheckCircle2, Mail, MessageSquare, Smartphone } from 'lucide-react'
+import { CheckCircle2, Mail, MessageSquare, Smartphone } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useChecklist, type NotificationPrefs } from '@/lib/checklist-state'
@@ -111,10 +111,6 @@ export function NudgesPage() {
   return (
     <div className="space-y-5 animate-soft-rise">
       <div>
-        <Badge variant="secondary" className="mb-2 gap-1 font-normal">
-          <Bell className="size-3" />
-          Mocked, nothing sent
-        </Badge>
         <h1 className="font-serif text-2xl font-semibold tracking-tight sm:text-3xl">
           Activation nudges
         </h1>
