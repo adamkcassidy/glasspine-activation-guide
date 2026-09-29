@@ -1,16 +1,7 @@
 import { Link } from 'react-router-dom'
-import { CheckCircle2, Mail, MessageSquare, Smartphone } from 'lucide-react'
+import { Mail, MessageSquare, Smartphone } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useChecklist, type NotificationPrefs } from '@/lib/checklist-state'
-import { cn } from '@/lib/utils'
-
-type NudgeState = {
-  photosDone: boolean
-  notificationsDone: boolean
-  autopayDone: boolean
-  notifications: NotificationPrefs
-}
 
 type NudgeFrame = {
   id: string
@@ -22,11 +13,9 @@ type NudgeFrame = {
   appBridge?: string
   ctaLabel: string
   to: string
-  isStopped: (s: NudgeState) => boolean
-  /** Channel must be opted in for this frame to be "reachable" */
-  needsChannel: keyof NotificationPrefs
 }
 
+/** Fixed illustrative frames — not tied to live checklist progress. */
 const FRAMES: NudgeFrame[] = [
   {
     id: 'day0-email',
@@ -37,8 +26,6 @@ const FRAMES: NudgeFrame[] = [
     appBridge: 'Get faster reminders — download the Glasspine app',
     ctaLabel: 'Open checklist',
     to: '/checklist',
-    isStopped: () => false,
-    needsChannel: 'email',
   },
   {
     id: 'day2-sms',
@@ -49,8 +36,6 @@ const FRAMES: NudgeFrame[] = [
     appBridge: 'Get faster reminders — download the Glasspine app',
     ctaLabel: 'Finish photos',
     to: '/checklist',
-    isStopped: (s) => s.photosDone,
-    needsChannel: 'sms',
   },
   {
     id: 'day2-push',
@@ -60,8 +45,6 @@ const FRAMES: NudgeFrame[] = [
     body: 'Document your unit while it’s fresh — takes a few minutes.',
     ctaLabel: 'Continue photos',
     to: '/checklist',
-    isStopped: (s) => s.photosDone,
-    needsChannel: 'push',
   },
   {
     id: 'day5-nudge',
@@ -71,8 +54,6 @@ const FRAMES: NudgeFrame[] = [
     body: 'Notifications or autopay still open? Complete them this week to finish activation.',
     ctaLabel: 'Finish remaining steps',
     to: '/checklist',
-    isStopped: (s) => s.notificationsDone && s.autopayDone,
-    needsChannel: 'push',
   },
 ]
 
@@ -89,27 +70,6 @@ const CHANNEL_LABEL = {
 } as const
 
 export function NudgesPage() {
-  const { photosDone, notificationsDone, autopayDone, notifications } = useChecklist()
-  const state: NudgeState = { photosDone, notificationsDone, autopayDone, notifications }
-
-  const day5Parts: string[] = []
-  if (!notificationsDone) day5Parts.push('notifications')
-  if (!autopayDone) day5Parts.push('autopay')
-  const day5Title =
-    day5Parts.length === 2
-      ? 'Notifications and autopay still open'
-      : day5Parts.length === 1
-        ? `${day5Parts[0]![0]!.toUpperCase()}${day5Parts[0]!.slice(1)} still open`
-        : 'Move-in steps complete'
-  const day5Body =
-    day5Parts.length > 0
-      ? `${day5Parts.join(' and ').replace(/^\w/, (c) => c.toUpperCase())} still open for Apt 4B. Finish this week to complete activation.`
-      : 'All remaining steps are done — this nudge would stop.'
-
-  const frames = FRAMES.map((frame) =>
-    frame.id === 'day5-nudge' ? { ...frame, title: day5Title, body: day5Body } : frame,
-  )
-
   return (
     <div className="max-w-2xl space-y-5 animate-soft-rise">
       <div>
@@ -117,33 +77,23 @@ export function NudgesPage() {
           Activation nudges
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Timed email, SMS, and push reminders that help residents finish move-in steps — sent only
-          when something is still open.
+          Timed email, SMS, and push reminders that help residents finish move-in steps. Sent only
+          when something is still open. Nudges tied to a completed step stop automatically.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground/80">
+          Illustrative sample for the comms plan. Not tied to progress in this demo session.
         </p>
       </div>
 
       <ol className="relative ml-3 space-y-4 border-l border-border/80 pl-6">
-        {frames.map((frame) => {
-          const stopped = frame.isStopped(state)
+        {FRAMES.map((frame) => {
           const Icon = CHANNEL_ICON[frame.channel]
           return (
             <li key={frame.id} className="relative">
-              <span
-                className={cn(
-                  'absolute -left-6 top-1.5 flex size-6 -translate-x-1/2 items-center justify-center rounded-full border bg-background',
-                  stopped ? 'border-primary/40 text-primary' : 'border-border text-muted-foreground',
-                )}
-              >
-                {stopped ? <CheckCircle2 className="size-3.5" /> : <Icon className="size-3.5" />}
+              <span className="absolute -left-6 top-1.5 flex size-6 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-background text-muted-foreground">
+                <Icon className="size-3.5" />
               </span>
-              <div
-                className={cn(
-                  'rounded-xl border p-4 shadow-sm transition-opacity',
-                  stopped
-                    ? 'border-border/50 bg-muted/30 opacity-70'
-                    : 'border-border/80 bg-card/90',
-                )}
-              >
+              <div className="rounded-xl border border-border/80 bg-card/90 p-4 shadow-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium uppercase tracking-wider text-primary/80">
                     {frame.dayLabel}
@@ -151,11 +101,6 @@ export function NudgesPage() {
                   <Badge variant="secondary" className="h-5 text-[10px] font-normal">
                     {CHANNEL_LABEL[frame.channel]}
                   </Badge>
-                  {stopped && (
-                    <Badge variant="secondary" className="h-5 text-[10px] font-normal">
-                      Stopped — item done
-                    </Badge>
-                  )}
                 </div>
                 <h2 className="mt-1.5 text-sm font-medium leading-snug">{frame.title}</h2>
                 <p className="mt-1.5 whitespace-pre-wrap text-sm text-muted-foreground">
@@ -164,11 +109,9 @@ export function NudgesPage() {
                 {frame.appBridge && (
                   <p className="mt-2 text-xs font-medium text-foreground/80">{frame.appBridge}</p>
                 )}
-                {!stopped && (
-                  <Button asChild size="sm" className="mt-3">
-                    <Link to={frame.to}>{frame.ctaLabel}</Link>
-                  </Button>
-                )}
+                <Button asChild size="sm" className="mt-3">
+                  <Link to={frame.to}>{frame.ctaLabel}</Link>
+                </Button>
               </div>
             </li>
           )
