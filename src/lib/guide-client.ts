@@ -15,8 +15,8 @@ export type GuideResponse = ScriptedReply & {
   source: 'live' | 'scripted'
 }
 
-/** Client abort window — keep above typical Gemini capacity retries. */
-const LIVE_TIMEOUT_MS = 12000
+/** Client abort — keep under function maxDuration (30s) with a small buffer. */
+const LIVE_TIMEOUT_MS = 28000
 
 function classifyGuideError(err: unknown): {
   kind: 'timeout' | 'api' | 'empty' | 'parse' | 'other'

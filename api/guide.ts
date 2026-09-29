@@ -2,6 +2,9 @@ import { google } from '@ai-sdk/google'
 import { generateText } from 'ai'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
+/** Allow Gemini retries + model fallback under capacity (Hobby/Pro max varies by plan). */
+export const maxDuration = 30
+
 type Scene = 'welcome' | 'checklist' | 'complete' | 'maintenance' | 'nudges' | 'measure'
 
 type ChecklistSnapshot = {
