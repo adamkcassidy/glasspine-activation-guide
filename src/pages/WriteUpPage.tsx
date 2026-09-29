@@ -2,7 +2,7 @@ import { RATIONALE_SECTIONS } from '@/lib/rationale'
 
 export function WriteUpPage() {
   return (
-    <div className="animate-soft-rise mx-auto max-w-2xl space-y-5">
+    <div className="animate-soft-rise max-w-2xl space-y-5">
       <div>
         <h1 className="font-serif text-2xl font-semibold tracking-tight sm:text-3xl">Write-up</h1>
         <p className="mt-2 text-sm text-muted-foreground">

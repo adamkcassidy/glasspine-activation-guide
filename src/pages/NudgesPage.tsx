@@ -92,10 +92,6 @@ export function NudgesPage() {
   const { photosDone, notificationsDone, autopayDone, notifications } = useChecklist()
   const state: NudgeState = { photosDone, notificationsDone, autopayDone, notifications }
 
-  const optedChannels = (['email', 'sms', 'push'] as const)
-    .filter((k) => notifications[k])
-    .map((k) => CHANNEL_LABEL[k])
-
   const day5Parts: string[] = []
   if (!notificationsDone) day5Parts.push('notifications')
   if (!autopayDone) day5Parts.push('autopay')
@@ -115,46 +111,30 @@ export function NudgesPage() {
   )
 
   return (
-    <div className="space-y-5 animate-soft-rise">
+    <div className="max-w-2xl space-y-5 animate-soft-rise">
       <div>
         <h1 className="font-serif text-2xl font-semibold tracking-tight sm:text-3xl">
           Activation nudges
         </h1>
-        <p className="mt-1 max-w-lg text-sm text-muted-foreground">
-          Reminder timeline tied to the checklist. Frames stop once the linked item is done in this
-          session.
-        </p>
-        <p className="mt-2 max-w-lg rounded-lg border border-border/70 bg-card/70 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-          {notificationsDone && optedChannels.length > 0 ? (
-            <>
-              Jordan turned on <strong className="text-foreground">{optedChannels.join(', ')}</strong>{' '}
-              in the checklist — that&apos;s why this sequence can reach Apt 4B. Push only works
-              after the Glasspine app is installed (called out in email/SMS).
-            </>
-          ) : (
-            <>
-              Without <strong className="text-foreground">Turn on notifications</strong> on the
-              checklist, these reminders would have no channel to reach the resident. Opt in there
-              to make this sequence real.
-            </>
-          )}
+        <p className="mt-1 text-sm text-muted-foreground">
+          Timed email, SMS, and push reminders that help residents finish move-in steps — sent only
+          when something is still open.
         </p>
       </div>
 
-      <ol className="relative space-y-4 border-l border-border/80 pl-5">
+      <ol className="relative ml-3 space-y-4 border-l border-border/80 pl-6">
         {frames.map((frame) => {
           const stopped = frame.isStopped(state)
-          const channelOn = notifications[frame.needsChannel]
           const Icon = CHANNEL_ICON[frame.channel]
           return (
             <li key={frame.id} className="relative">
               <span
                 className={cn(
-                  'absolute -left-[1.55rem] top-1 flex size-5 items-center justify-center rounded-full border bg-background',
+                  'absolute -left-6 top-1.5 flex size-6 -translate-x-1/2 items-center justify-center rounded-full border bg-background',
                   stopped ? 'border-primary/40 text-primary' : 'border-border text-muted-foreground',
                 )}
               >
-                {stopped ? <CheckCircle2 className="size-3" /> : <Icon className="size-3" />}
+                {stopped ? <CheckCircle2 className="size-3.5" /> : <Icon className="size-3.5" />}
               </span>
               <div
                 className={cn(
@@ -174,11 +154,6 @@ export function NudgesPage() {
                   {stopped && (
                     <Badge variant="secondary" className="h-5 text-[10px] font-normal">
                       Stopped — item done
-                    </Badge>
-                  )}
-                  {!channelOn && (
-                    <Badge variant="secondary" className="h-5 text-[10px] font-normal">
-                      Channel not opted in
                     </Badge>
                   )}
                 </div>
