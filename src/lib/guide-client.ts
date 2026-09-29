@@ -15,7 +15,7 @@ export type GuideResponse = ScriptedReply & {
   source: 'live' | 'scripted'
 }
 
-const LIVE_TIMEOUT_MS = 8000
+const LIVE_TIMEOUT_MS = 15000
 
 /**
  * Asks Guide via /api/guide (JSON). Falls back to scripted replies on
