@@ -92,7 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
 
     const { text } = await generateText({
-      model: google('gemini-2.5-flash'),
+      model: google('gemini-3.8-flash'),
       system: buildSystemPrompt(scene, checklistState),
       prompt: `${prior ? `Conversation so far:\n${prior}\n\n` : ''}Resident: ${message}\nGuide:`,
     })
