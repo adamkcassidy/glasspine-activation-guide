@@ -39,7 +39,7 @@ cp .env.example .env
 npx vercel dev
 ```
 
-3. Ask Guide something in the dock. Replies come from Gemini (`gemini-3.8-flash`, falling back to `gemini-2.5-flash-lite`) as a single JSON response. The `/api/guide` function allows up to 30s (`maxDuration`). If the call fails or the client aborts (~28s), the UI falls back to scripts and shows Demo mode in the switcher.
+3. Ask Guide something in the dock. Replies come from Gemini (`gemini-2.5-flash`, same model on retry) as a single JSON response. The `/api/guide` function allows up to 30s (`maxDuration`). If the call fails or the client aborts (~28s), the UI falls back to scripts and shows Demo mode in the switcher.
 
 `.env` is gitignored. The key is read only in [`api/guide.ts`](./api/guide.ts) — never prefixed with `VITE_`.
 

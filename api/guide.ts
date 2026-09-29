@@ -60,7 +60,7 @@ Rules:
 - When explaining move-in photos: a dated photo record of unit condition on move-in day gives the resident and property manager the same reference point if questions come up later.`
 }
 
-const GUIDE_MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash-lite'] as const
+const GUIDE_MODEL = 'gemini-2.5-flash' as const
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -92,48 +92,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const prompt = `${prior ? `Conversation so far:\n${prior}\n\n` : ''}Resident: ${message}\nGuide:`
   const system = buildSystemPrompt(scene, checklistState)
 
-  let lastError: unknown
+  try {
+    console.log('[guide] calling generateText', {
+      model: GUIDE_MODEL,
+      scene,
+      messageLen: message.trim().length,
+      historyLen: history?.length ?? 0,
+    })
 
-  for (const modelId of GUIDE_MODELS) {
-    try {
-      console.log('[guide] calling generateText', {
-        model: modelId,
-        scene,
-        messageLen: message.trim().length,
-        historyLen: history?.length ?? 0,
-      })
+    const { text } = await generateText({
+      model: google(GUIDE_MODEL),
+      system,
+      prompt,
+      // Retry the same working model under capacity — do not switch models.
+      maxRetries: 2,
+    })
 
-      const { text } = await generateText({
-        model: google(modelId),
-        system,
-        prompt,
-        maxRetries: 2,
-      })
+    console.log('[guide] generateText done', {
+      model: GUIDE_MODEL,
+      textLen: text?.length ?? 0,
+      preview: text?.slice(0, 80) ?? '',
+    })
 
-      console.log('[guide] generateText done', {
-        model: modelId,
-        textLen: text?.length ?? 0,
-        preview: text?.slice(0, 80) ?? '',
-      })
-
-      if (!text?.trim()) {
-        lastError = new Error(`Empty model response from ${modelId}`)
-        continue
-      }
-
-      return res.status(200).json({ text: text.trim() })
-    } catch (error) {
-      lastError = error
-      console.error(`[guide] model ${modelId} failed`, error)
+    if (!text?.trim()) {
+      return res.status(502).json({ error: 'Empty model response', detail: GUIDE_MODEL })
     }
-  }
 
-  console.error('[guide] Guide API error — all models failed', lastError)
-  const detail =
-    lastError instanceof Error
-      ? lastError.message
-      : typeof lastError === 'string'
-        ? lastError
-        : 'unknown'
-  return res.status(502).json({ error: 'Model call failed', detail })
+    return res.status(200).json({ text: text.trim() })
+  } catch (error) {
+    console.error('[guide] Guide API error', error)
+    const detail = error instanceof Error ? error.message : String(error)
+    return res.status(502).json({ error: 'Model call failed', detail })
+  }
 }
