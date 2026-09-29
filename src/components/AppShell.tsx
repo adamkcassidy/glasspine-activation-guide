@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-svh w-full flex-col">
       <MetaBar />
 
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pt-4 sm:px-6">
+      <div className="mx-auto flex w-full max-w-[960px] flex-1 flex-col px-4 pt-4 sm:px-6">
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-3">
             <PineMark />
