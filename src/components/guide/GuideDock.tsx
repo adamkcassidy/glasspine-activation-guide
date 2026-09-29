@@ -90,8 +90,8 @@ export function GuideDock({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'fixed bottom-5 right-5 z-40 flex w-[min(100vw-1.5rem,400px)] flex-col',
-        'h-[min(82svh,680px)]',
+        'fixed bottom-5 right-5 z-40 flex w-[min(100vw-1.5rem,340px)] flex-col',
+        'h-[min(82svh,640px)]',
         className,
       )}
     >
