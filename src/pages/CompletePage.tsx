@@ -5,7 +5,10 @@ import {
   BadgeCheck,
   Building2,
   Car,
+  ClipboardList,
+  CloudSun,
   FileText,
+  MapPin,
   PawPrint,
   UserPlus,
   Wrench,
@@ -15,26 +18,48 @@ import { useChecklist } from '@/lib/checklist-state'
 import { RESIDENT } from '@/lib/resident'
 import { cn } from '@/lib/utils'
 
-const COMING_SOON = [
+const SECONDARY_TILES = [
   {
-    title: 'Review your lease',
-    description: 'See key terms, dates, and renewal options.',
-    icon: FileText,
+    title: 'Rent due',
+    description: 'Due on the 1st · 5-day grace period',
+    icon: Building2,
+    action: 'View',
+    kind: 'rent' as const,
+  },
+  {
+    title: 'Report a maintenance issue',
+    description: 'Guide helps triage and capture a clear ticket.',
+    icon: Wrench,
+    action: 'Report',
+    kind: 'maintenance' as const,
   },
   {
     title: 'Refer a friend',
     description: 'Give them a discount, get one yourself.',
     icon: UserPlus,
+    action: 'Refer',
+    kind: 'soon' as const,
+  },
+  {
+    title: 'Review your lease',
+    description: 'See key terms, dates, and renewal options.',
+    icon: FileText,
+    action: 'View',
+    kind: 'soon' as const,
   },
   {
     title: 'Add a pet',
     description: 'Submit pet details and get approval.',
     icon: PawPrint,
+    action: 'Add',
+    kind: 'soon' as const,
   },
   {
     title: 'Parking permit',
     description: 'Request or renew your assigned spot.',
     icon: Car,
+    action: 'Reserve',
+    kind: 'soon' as const,
   },
 ] as const
 
@@ -88,22 +113,10 @@ function SoftConfetti({ play }: { play: boolean }) {
 }
 
 export function CompletePage() {
-  const { photos, notificationsDone, allDone, autopay, autopayDone } = useChecklist()
+  const { allDone, autopay, autopayDone, completedCount, totalCount } = useChecklist()
   const [toast, setToast] = useState<string | null>(null)
   const [celebrate, setCelebrate] = useState(false)
-  const photoCount = photos.length
-  const parts: string[] = []
-  if (photoCount > 0) {
-    parts.push(`unit condition (${photoCount} photo${photoCount === 1 ? '' : 's'})`)
-  } else {
-    parts.push('unit condition')
-  }
-  if (notificationsDone) parts.push('notification preferences')
-  if (autopayDone) parts.push('autopay setup')
-  const recordList =
-    parts.length <= 1
-      ? parts[0] ?? 'move-in details'
-      : `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`
+  const [heroFailed, setHeroFailed] = useState(false)
 
   useEffect(() => {
     if (!toast) return
@@ -122,96 +135,160 @@ export function CompletePage() {
   }, [allDone])
 
   return (
-    <div className="space-y-6">
-      <div className="animate-soft-rise relative overflow-hidden rounded-2xl border border-primary/25 bg-card/90 p-6 text-center shadow-sm sm:p-8">
-        <SoftConfetti play={celebrate} />
-        <div
+    <div className="space-y-5">
+      <section className="animate-soft-rise overflow-hidden rounded-2xl border border-border/80 bg-card/90 shadow-sm">
+        <div className="relative aspect-[21/9] min-h-[140px] w-full bg-muted sm:min-h-[180px]">
+          {!heroFailed ? (
+            <img
+              src="/apartment-hero.jpg"
+              alt={`${RESIDENT.unit} at ${RESIDENT.community}`}
+              className="size-full object-cover"
+              onError={() => setHeroFailed(true)}
+            />
+          ) : (
+            <div
+              className="size-full bg-gradient-to-br from-accent via-secondary to-muted"
+              aria-hidden
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/55 via-foreground/15 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+            <h1 className="font-serif text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              {RESIDENT.fullName}
+            </h1>
+            <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/90">
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="size-3.5 shrink-0 opacity-80" />
+                {RESIDENT.unit}, {RESIDENT.community}
+              </span>
+              <span className="text-white/70">{RESIDENT.city}</span>
+              <span className="inline-flex items-center gap-1 text-white/85">
+                <CloudSun className="size-3.5 shrink-0 opacity-80" />
+                {RESIDENT.weather}
+                <span className="text-[10px] uppercase tracking-wider text-white/55">static</span>
+              </span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {!allDone ? (
+        <Link
+          to="/checklist"
           className={cn(
-            'relative mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary',
-            allDone && 'animate-check-spring',
+            'animate-soft-rise relative flex items-start gap-4 overflow-hidden rounded-2xl border-2 border-primary/35 bg-primary/5 p-5 shadow-sm transition-colors',
+            'hover:border-primary/50 hover:bg-primary/[0.08]',
           )}
         >
-          <BadgeCheck className="size-8" />
-        </div>
-        <h1 className="font-serif text-2xl font-semibold tracking-tight sm:text-3xl">
-          Move-in record saved
-        </h1>
-        <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Nice work, {RESIDENT.firstName}. Your move-in day {recordList}
-          {allDone ? ' are' : ' will be'} recorded for {RESIDENT.unit}.
-        </p>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 animate-soft-rise [animation-delay:100ms]">
-        <div className="rounded-xl border border-border/80 bg-card/90 p-4 shadow-sm space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-              <Building2 className="size-4" />
+          <SoftConfetti play={false} />
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <ClipboardList className="size-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-primary/80">
+              Get settled
+            </p>
+            <h2 className="mt-0.5 font-serif text-xl font-semibold tracking-tight text-foreground">
+              Move-In Checklist
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {completedCount} of {totalCount} complete — photos, notifications, and autopay.
+            </p>
+            <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+              Continue checklist
+              <ArrowRight className="size-4" />
+            </span>
+          </div>
+        </Link>
+      ) : (
+        <div className="animate-soft-rise relative overflow-hidden rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 shadow-sm">
+          <SoftConfetti play={celebrate} />
+          <div className="relative flex items-center gap-3">
+            <div
+              className={cn(
+                'flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground',
+                celebrate && 'animate-check-spring',
+              )}
+            >
+              <BadgeCheck className="size-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="font-medium">Rent due</h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Due on the 1st · 5-day grace period
+              <p className="text-sm font-medium text-foreground">Checklist complete</p>
+              <p className="text-xs text-muted-foreground">
+                Your move-in record for {RESIDENT.unit} is saved.
               </p>
-              {autopayDone && autopay ? (
-                <p className="mt-2 text-sm text-primary">
-                  Autopay on · we&apos;ll draft your rent on the 1st of each month
-                </p>
-              ) : (
-                <Button asChild size="sm" className="mt-3" variant="secondary">
-                  <Link to="/checklist">
-                    Set up autopay
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </Button>
-              )}
             </div>
+            <Button asChild size="sm" variant="secondary">
+              <Link to="/checklist">View</Link>
+            </Button>
           </div>
         </div>
+      )}
 
-        <div className="rounded-xl border border-border/80 bg-card/90 p-4 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-              <Wrench className="size-4" />
-            </div>
-            <div className="min-w-0 flex-1 space-y-3">
-              <div>
-                <h2 className="font-medium">Submit a maintenance request</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  Guide helps triage and capture a clear ticket.
-                </p>
-              </div>
-              <Button asChild size="sm" variant="secondary">
-                <Link to="/maintenance">
-                  Open maintenance
-                  <ArrowRight className="size-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {COMING_SOON.map(({ title, description, icon: Icon }) => (
-          <button
-            key={title}
-            type="button"
-            onClick={() => setToast('Coming soon')}
-            className={cn(
-              'rounded-xl border border-border/80 bg-card/90 p-4 text-left shadow-sm transition-colors',
-              'hover:border-primary/35 hover:bg-card',
-            )}
-          >
+      <div className="grid gap-3 sm:grid-cols-2 animate-soft-rise [animation-delay:100ms]">
+        {SECONDARY_TILES.map(({ title, description, icon: Icon, action, kind }) => {
+          const actionLabel = kind === 'rent' && !autopayDone ? 'Set up autopay' : action
+          const body = (
             <div className="flex items-start gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
                 <Icon className="size-4" />
               </div>
-              <div>
-                <h2 className="font-medium">{title}</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+              <div className="min-w-0 flex-1 space-y-3">
+                <div>
+                  <h2 className="font-medium">{title}</h2>
+                  <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+                  {kind === 'rent' && autopayDone && autopay && (
+                    <p className="mt-2 text-sm text-primary">
+                      Autopay on · we&apos;ll draft your rent on the 1st of each month
+                    </p>
+                  )}
+                </div>
+                <span className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border/80 bg-secondary px-2.5 text-xs font-medium text-secondary-foreground">
+                  {actionLabel}
+                  <ArrowRight className="size-3.5" />
+                </span>
               </div>
             </div>
-          </button>
-        ))}
+          )
+
+          if (kind === 'maintenance') {
+            return (
+              <Link
+                key={title}
+                to="/maintenance"
+                className="rounded-xl border border-border/80 bg-card/90 p-4 shadow-sm transition-colors hover:border-primary/35 hover:bg-card"
+              >
+                {body}
+              </Link>
+            )
+          }
+
+          if (kind === 'rent' && !autopayDone) {
+            return (
+              <Link
+                key={title}
+                to="/checklist"
+                className="rounded-xl border border-border/80 bg-card/90 p-4 shadow-sm transition-colors hover:border-primary/35 hover:bg-card"
+              >
+                {body}
+              </Link>
+            )
+          }
+
+          return (
+            <button
+              key={title}
+              type="button"
+              onClick={() => setToast('Coming soon')}
+              className={cn(
+                'rounded-xl border border-border/80 bg-card/90 p-4 text-left shadow-sm transition-colors',
+                'hover:border-primary/35 hover:bg-card',
+              )}
+            >
+              {body}
+            </button>
+          )
+        })}
       </div>
 
       {toast && (

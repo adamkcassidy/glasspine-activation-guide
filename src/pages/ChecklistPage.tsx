@@ -21,7 +21,7 @@ export function ChecklistPage() {
     const justCompleted = allDone && !prevAllDoneRef.current
     prevAllDoneRef.current = allDone
     if (!justCompleted) return
-    const t = window.setTimeout(() => navigate('/complete'), 600)
+    const t = window.setTimeout(() => navigate('/'), 600)
     return () => window.clearTimeout(t)
   }, [allDone, navigate])
 
@@ -67,7 +67,7 @@ export function ChecklistPage() {
 
       {allDone && (
         <Button asChild className="w-full sm:w-auto">
-          <Link to="/complete">Go to Dashboard</Link>
+          <Link to="/">Go to Dashboard</Link>
         </Button>
       )}
     </div>

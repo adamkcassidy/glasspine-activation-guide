@@ -262,6 +262,10 @@ export const WELCOME_SEQUENCE = [
   `Ready to start whenever you are.`,
 ] as const
 
+export const DASHBOARD_SEED_MESSAGES = [
+  `Welcome home, Jordan — I'm Guide. Open Move-In Checklist from Dashboard when you're ready — photos, notifications, and autopay.`,
+] as const
+
 export const COMPLETE_SEED_MESSAGES = [
   'Checklist complete — your move-in record is saved. From Dashboard you can check rent or open a maintenance request anytime.',
 ] as const

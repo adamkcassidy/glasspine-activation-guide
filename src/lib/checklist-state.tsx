@@ -9,11 +9,11 @@ import {
 } from 'react'
 import {
   COMPLETE_SEED_MESSAGES,
+  DASHBOARD_SEED_MESSAGES,
   MAINTENANCE_PROACTIVE,
   MAINTENANCE_READY_PROACTIVE,
   MEASURE_SEED_MESSAGES,
   NUDGES_SEED_MESSAGES,
-  WELCOME_SEQUENCE,
   type GuideScene,
 } from '@/lib/guide-scripts'
 import { RENT_DUE_DAY, ROOM_LABELS } from '@/lib/resident'
@@ -334,17 +334,24 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     setLastSource(null)
     setChatOpenedThisSession(false)
     setChatCollapsed(false)
-    setPendingBoot([...WELCOME_SEQUENCE])
+    setPendingBoot([...DASHBOARD_SEED_MESSAGES])
   }, [setChatCollapsed])
 
   function sceneFromPath(pathname: string): GuideScene {
     if (pathname.startsWith('/checklist')) return 'checklist'
-    if (pathname.startsWith('/complete')) return 'complete'
     if (pathname.startsWith('/maintenance')) return 'maintenance'
     if (pathname.startsWith('/nudges')) return 'nudges'
     if (pathname.startsWith('/measure')) return 'measure'
-    return 'welcome'
+    // `/` and legacy `/complete` both map to Dashboard
+    return 'complete'
   }
+
+  const autopayDone = autopay !== null
+  const completedCount = [photosDone, notificationsDone, autopayDone].filter(Boolean).length
+  const totalCount = 3
+  const allDone = completedCount === totalCount
+  const allDoneRef = useRef(allDone)
+  allDoneRef.current = allDone
 
   /** Boots Guide chat for the current route. Never clears checklist progress. */
   const bootGuideForPath = useCallback((pathname: string) => {
@@ -372,15 +379,15 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
 
     switch (scene) {
       case 'welcome':
-        setPendingBoot([...WELCOME_SEQUENCE])
+      case 'complete':
+        setPendingBoot(
+          allDoneRef.current ? [...COMPLETE_SEED_MESSAGES] : [...DASHBOARD_SEED_MESSAGES],
+        )
         break
       case 'checklist':
         setPendingBoot([
           "I'm here while you work through the checklist. Ask about photos, notifications, or autopay anytime.",
         ])
-        break
-      case 'complete':
-        setPendingBoot([...COMPLETE_SEED_MESSAGES])
         break
       case 'maintenance':
         // Flow starts when the resident taps Report an issue.
@@ -394,11 +401,6 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
         break
     }
   }, [])
-
-  const autopayDone = autopay !== null
-  const completedCount = [photosDone, notificationsDone, autopayDone].filter(Boolean).length
-  const totalCount = 3
-  const allDone = completedCount === totalCount
 
   const value = useMemo(
     () => ({

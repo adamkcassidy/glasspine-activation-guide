@@ -4,6 +4,9 @@ export const RESIDENT = {
   fullName: 'Jordan Hale',
   unit: 'Apt 4B',
   community: 'Oak Street Residences',
+  city: 'Oakland, CA',
+  /** Static mock weather for the Dashboard hero — not a live API. */
+  weather: '72°F, Sunny',
   email: 'jordan.hale@email.com',
   phoneDisplay: '(415) 555-4821',
 } as const

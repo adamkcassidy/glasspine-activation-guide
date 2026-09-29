@@ -14,13 +14,13 @@ const CHANNELS: {
     key: 'email',
     label: 'Email',
     hint: 'Inbox updates for maintenance, rent, and anything that needs you.',
-    contact: `Sending to ${RESIDENT.email}`,
+    contact: `Emails will be sent to ${RESIDENT.email}`,
   },
   {
     key: 'sms',
     label: 'SMS',
     hint: 'Text alerts so nothing important slips by while you’re busy.',
-    contact: `Texting ${RESIDENT.phoneDisplay}`,
+    contact: `Texts will be sent to ${RESIDENT.phoneDisplay}`,
   },
 ]
 
@@ -120,7 +120,7 @@ export function NotificationSetup() {
               <img
                 src="/app-store-badge.svg"
                 alt="Download on the App Store"
-                className="h-10 w-auto"
+                className="h-8 w-auto"
               />
             </button>
             {notifications.push && (

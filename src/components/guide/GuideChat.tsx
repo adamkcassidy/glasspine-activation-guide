@@ -17,11 +17,11 @@ import { cn } from '@/lib/utils'
 
 function sceneFromPath(pathname: string): GuideScene {
   if (pathname.startsWith('/checklist')) return 'checklist'
-  if (pathname.startsWith('/complete')) return 'complete'
   if (pathname.startsWith('/maintenance')) return 'maintenance'
   if (pathname.startsWith('/nudges')) return 'nudges'
   if (pathname.startsWith('/measure')) return 'measure'
-  return 'welcome'
+  // `/` and legacy `/complete` both map to Dashboard
+  return 'complete'
 }
 
 function GuideAvatar() {

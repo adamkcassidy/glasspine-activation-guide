@@ -1,4 +1,4 @@
-import { CheckCircle2, Wrench } from 'lucide-react'
+import { CheckCircle2, Inbox, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useChecklist } from '@/lib/checklist-state'
 
@@ -19,7 +19,7 @@ export function MaintenancePage() {
   return (
     <div className="space-y-4 animate-soft-rise max-w-lg">
       <h1 className="font-serif text-2xl font-semibold tracking-tight sm:text-3xl">
-        Something needs attention
+        Need something fixed?
       </h1>
       <p className="text-sm leading-relaxed text-muted-foreground">
         Tell Guide what&apos;s going on in the chat — free text or a suggested chip. Guide will ask
@@ -33,7 +33,7 @@ export function MaintenancePage() {
         Report an issue
       </Button>
 
-      {submittedRequest && (
+      {submittedRequest ? (
         <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 shadow-sm animate-soft-rise">
           <div className="flex items-center gap-2 text-primary">
             <CheckCircle2 className="size-4 shrink-0" />
@@ -59,6 +59,16 @@ export function MaintenancePage() {
           </dl>
           <p className="mt-3 text-sm text-muted-foreground">
             You&apos;ll get email and SMS updates on this request.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/80 bg-muted/20 px-6 py-10 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <Inbox className="size-5" />
+          </div>
+          <p className="mt-3 text-sm font-medium text-foreground">No active requests right now.</p>
+          <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+            When you report an issue, the confirmation will show up here.
           </p>
         </div>
       )}

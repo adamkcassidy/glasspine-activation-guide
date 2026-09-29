@@ -13,9 +13,6 @@ function nudgeCopyForPath(pathname: string): string {
   if (pathname.startsWith('/checklist')) {
     return 'Questions on photos, notifications, or autopay? Ask me anytime.'
   }
-  if (pathname.startsWith('/complete')) {
-    return 'You’re set — ask me about rent or maintenance anytime.'
-  }
   if (pathname.startsWith('/measure')) {
     return 'Curious how we’d measure activation? I can walk you through it.'
   }
@@ -25,7 +22,8 @@ function nudgeCopyForPath(pathname: string): string {
   if (pathname.startsWith('/write-up')) {
     return 'Questions about the Guide-led move-in flow? I’m here.'
   }
-  return 'Questions about your move-in checklist? I’m here to help.'
+  // Dashboard (`/`) and legacy `/complete`
+  return 'You’re on Dashboard — ask me about the checklist, rent, or maintenance anytime.'
 }
 
 export function GuideDock({ className }: { className?: string }) {

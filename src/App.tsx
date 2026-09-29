@@ -6,7 +6,6 @@ import { CompletePage } from '@/pages/CompletePage'
 import { MaintenancePage } from '@/pages/MaintenancePage'
 import { MeasurePage } from '@/pages/MeasurePage'
 import { NudgesPage } from '@/pages/NudgesPage'
-import { WelcomePage } from '@/pages/WelcomePage'
 import { WriteUpPage } from '@/pages/WriteUpPage'
 
 export default function App() {
@@ -15,9 +14,9 @@ export default function App() {
       <ChecklistProvider>
         <AppShell>
           <Routes>
-            <Route path="/" element={<WelcomePage />} />
+            <Route path="/" element={<CompletePage />} />
+            <Route path="/complete" element={<Navigate to="/" replace />} />
             <Route path="/checklist" element={<ChecklistPage />} />
-            <Route path="/complete" element={<CompletePage />} />
             <Route path="/maintenance" element={<MaintenancePage />} />
             <Route path="/nudges" element={<NudgesPage />} />
             <Route path="/measure" element={<MeasurePage />} />
