@@ -15,7 +15,26 @@ export type GuideResponse = ScriptedReply & {
   source: 'live' | 'scripted'
 }
 
-const LIVE_TIMEOUT_MS = 15000
+/** Client abort window — keep above typical Gemini capacity retries. */
+const LIVE_TIMEOUT_MS = 12000
+
+function classifyGuideError(err: unknown): {
+  kind: 'timeout' | 'api' | 'empty' | 'parse' | 'other'
+  name: string
+  message: string
+} {
+  const name = err instanceof Error ? err.name : typeof err
+  const message = err instanceof Error ? err.message : String(err)
+  const isAbort =
+    name === 'AbortError' ||
+    (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError')
+
+  if (isAbort) return { kind: 'timeout', name, message }
+  if (/Empty Guide response/i.test(message)) return { kind: 'empty', name, message }
+  if (/Guide API \d+/i.test(message)) return { kind: 'api', name, message }
+  if (err instanceof SyntaxError) return { kind: 'parse', name, message }
+  return { kind: 'other', name, message }
+}
 
 /**
  * Asks Guide via /api/guide (JSON). Falls back to scripted replies on
@@ -38,10 +57,27 @@ export async function askGuide(
       signal: controller.signal,
     })
 
-    if (!res.ok) throw new Error(`Guide API ${res.status}`)
+    const raw = await res.text()
+    let data: { text?: string; error?: string } = {}
+    try {
+      data = raw ? (JSON.parse(raw) as { text?: string; error?: string }) : {}
+    } catch {
+      throw new Error(
+        `Guide API ${res.status}: non-JSON body (${raw.slice(0, 120) || 'empty'})`,
+      )
+    }
 
-    const data = (await res.json()) as { text?: string }
-    if (!data.text?.trim()) throw new Error('Empty Guide response')
+    if (!res.ok) {
+      throw new Error(
+        `Guide API ${res.status}${data.error ? `: ${data.error}` : ''}${raw ? ` | body=${raw.slice(0, 200)}` : ''}`,
+      )
+    }
+
+    if (!data.text?.trim()) {
+      throw new Error(
+        `Empty Guide response | status=${res.status} | body=${raw.slice(0, 200) || '(empty)'}`,
+      )
+    }
 
     return {
       text: data.text.trim(),
@@ -49,7 +85,8 @@ export async function askGuide(
       source: 'live',
     }
   } catch (err) {
-    console.error('[guide-client] askGuide failed', err)
+    const classified = classifyGuideError(err)
+    console.error('[guide-client] askGuide failed', classified, err)
     const fallback = getScriptedReply(scene, message)
     return { ...fallback, source: 'scripted' }
   } finally {

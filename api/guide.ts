@@ -57,7 +57,7 @@ Rules:
 - When explaining move-in photos: a dated photo record of unit condition on move-in day gives the resident and property manager the same reference point if questions come up later.`
 }
 
-const GUIDE_MODELS = ['gemini-3.8-flash', 'gemini-2.0-flash'] as const
+const GUIDE_MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash-lite'] as const
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -104,7 +104,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         model: google(modelId),
         system,
         prompt,
-        maxRetries: 1,
+        maxRetries: 2,
       })
 
       console.log('[guide] generateText done', {
@@ -126,5 +126,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   console.error('[guide] Guide API error — all models failed', lastError)
-  return res.status(502).json({ error: 'Model call failed' })
+  const detail =
+    lastError instanceof Error
+      ? lastError.message
+      : typeof lastError === 'string'
+        ? lastError
+        : 'unknown'
+  return res.status(502).json({ error: 'Model call failed', detail })
 }
