@@ -190,7 +190,7 @@ export function NudgesPage() {
                   <p className="mt-2 text-xs font-medium text-foreground/80">{frame.appBridge}</p>
                 )}
                 {!stopped && (
-                  <Button asChild size="sm" variant="secondary" className="mt-3">
+                  <Button asChild size="sm" className="mt-3">
                     <Link to={frame.to}>{frame.ctaLabel}</Link>
                   </Button>
                 )}

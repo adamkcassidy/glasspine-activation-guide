@@ -30,10 +30,10 @@ export function ChecklistItem({
       <div className="mb-3 flex items-start gap-3">
         <div
           className={cn(
-            'flex size-9 shrink-0 items-center justify-center rounded-full border',
+            'flex size-10 shrink-0 items-center justify-center rounded-full',
             done
-              ? 'animate-check-pop border-primary bg-primary text-primary-foreground'
-              : 'border-border bg-muted text-muted-foreground',
+              ? 'animate-check-pop bg-primary text-primary-foreground'
+              : 'bg-accent text-accent-foreground',
           )}
         >
           {done ? <Check className="size-4" /> : <Icon className="size-4" />}
