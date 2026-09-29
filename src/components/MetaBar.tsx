@@ -1,18 +1,17 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { RotateCcw } from 'lucide-react'
 import { useChecklist } from '@/lib/checklist-state'
-import type { GuideScene } from '@/lib/guide-scripts'
 import { cn } from '@/lib/utils'
 
-const META_LINKS: { to: string; label: string; scene?: GuideScene }[] = [
+const META_LINKS = [
   { to: '/write-up', label: 'Write-up' },
-  { to: '/nudges', label: 'Nudges', scene: 'nudges' },
-  { to: '/measure', label: 'Measure', scene: 'measure' },
-]
+  { to: '/nudges', label: 'Nudges' },
+  { to: '/measure', label: 'Measure' },
+] as const
 
 export function MetaBar() {
   const navigate = useNavigate()
-  const { resetDemo, seedForScene } = useChecklist()
+  const { resetDemo } = useChecklist()
 
   function handleReset() {
     resetDemo()
@@ -30,12 +29,6 @@ export function MetaBar() {
             <NavLink
               key={link.to}
               to={link.to}
-              onClick={(e) => {
-                if (!link.scene) return
-                e.preventDefault()
-                seedForScene(link.scene)
-                navigate(link.to)
-              }}
               className={({ isActive }) =>
                 cn(
                   'rounded-md px-2 py-0.5 font-medium text-primary-foreground/85 transition-colors hover:bg-primary-foreground/15 hover:text-primary-foreground',

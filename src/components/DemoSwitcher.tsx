@@ -1,25 +1,15 @@
-import { NavLink, useNavigate } from 'react-router-dom'
-import { useChecklist } from '@/lib/checklist-state'
-import type { GuideScene } from '@/lib/guide-scripts'
+import { NavLink } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 /** In-app resident navigation — deliverables live in MetaBar. */
-const SCENES: { to: string; label: string; scene: GuideScene }[] = [
-  { to: '/', label: 'Welcome', scene: 'welcome' },
-  { to: '/checklist', label: 'Checklist', scene: 'checklist' },
-  { to: '/complete', label: 'Dashboard', scene: 'complete' },
-  { to: '/maintenance', label: 'Maintenance', scene: 'maintenance' },
-]
+const SCENES = [
+  { to: '/', label: 'Welcome' },
+  { to: '/checklist', label: 'Checklist' },
+  { to: '/complete', label: 'Dashboard' },
+  { to: '/maintenance', label: 'Maintenance' },
+] as const
 
 export function DemoSwitcher() {
-  const navigate = useNavigate()
-  const { seedForScene } = useChecklist()
-
-  function jumpTo(to: string, scene: GuideScene) {
-    seedForScene(scene)
-    navigate(to)
-  }
-
   return (
     <nav
       aria-label="Resident app"
@@ -30,10 +20,6 @@ export function DemoSwitcher() {
           key={scene.to}
           to={scene.to}
           end={scene.to === '/'}
-          onClick={(e) => {
-            e.preventDefault()
-            jumpTo(scene.to, scene.scene)
-          }}
           className={({ isActive }) =>
             cn(
               'rounded-full px-2 py-1 font-medium text-muted-foreground transition-colors',

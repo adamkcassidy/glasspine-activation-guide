@@ -3,16 +3,18 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
-import type { GuideScene } from '@/lib/guide-scripts'
 import {
   COMPLETE_SEED_MESSAGES,
   MAINTENANCE_PROACTIVE,
+  MAINTENANCE_READY_PROACTIVE,
   MEASURE_SEED_MESSAGES,
   NUDGES_SEED_MESSAGES,
   WELCOME_SEQUENCE,
+  type GuideScene,
 } from '@/lib/guide-scripts'
 import { RENT_DUE_DAY, ROOM_LABELS } from '@/lib/resident'
 
@@ -112,7 +114,8 @@ export type ChecklistState = {
   setChatCollapsed: (collapsed: boolean) => void
   clearPendingBoot: () => void
   resetDemo: () => void
-  seedForScene: (scene: GuideScene) => void
+  /** Boots Guide for a route without wiping checklist progress. */
+  bootGuideForPath: (pathname: string) => void
 }
 
 const ChecklistContext = createContext<ChecklistState | null>(null)
@@ -141,18 +144,6 @@ function buildRoomPhotos(takenAt = new Date().toISOString()): UnitPhoto[] {
   }))
 }
 
-function seedNotifications(): NotificationPrefs {
-  return { email: true, sms: true, push: true }
-}
-
-function seedAutopay(): AutopayInfo {
-  return {
-    connected: true,
-    draftDay: RENT_DUE_DAY,
-    accountLabel: 'Checking ••1234 connected',
-  }
-}
-
 function emptyDraft(): MaintenanceDraft {
   return { ...DEFAULT_DRAFT }
 }
@@ -171,7 +162,14 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
   const [chips, setChips] = useState<string[]>([])
   const [lastSource, setLastSource] = useState<'live' | 'scripted' | null>(null)
   const [chatCollapsed, setChatCollapsed] = useState(false)
-  const [pendingBoot, setPendingBoot] = useState<string[] | null>([...WELCOME_SEQUENCE])
+  const [pendingBoot, setPendingBoot] = useState<string[] | null>(null)
+
+  const checklistRef = useRef({
+    photosDone: false,
+    notificationsDone: false,
+    autopay: null as AutopayInfo | null,
+  })
+  checklistRef.current = { photosDone, notificationsDone, autopay }
 
   const addRoomPhotos = useCallback(() => {
     setPhotos(buildRoomPhotos())
@@ -264,67 +262,62 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     setPendingBoot([...WELCOME_SEQUENCE])
   }, [])
 
-  const seedForScene = useCallback((scene: GuideScene) => {
+  function sceneFromPath(pathname: string): GuideScene {
+    if (pathname.startsWith('/checklist')) return 'checklist'
+    if (pathname.startsWith('/complete')) return 'complete'
+    if (pathname.startsWith('/maintenance')) return 'maintenance'
+    if (pathname.startsWith('/nudges')) return 'nudges'
+    if (pathname.startsWith('/measure')) return 'measure'
+    return 'welcome'
+  }
+
+  /** Boots Guide chat for the current route. Never clears checklist progress. */
+  const bootGuideForPath = useCallback((pathname: string) => {
+    const { photosDone: pd, notificationsDone: nd, autopay: ap } = checklistRef.current
+    const checklistComplete = pd && nd && ap !== null
+
     setMessages([])
     setChips([])
     setLastSource(null)
-    setChatCollapsed(false)
-    setMaintenancePhase('listening')
-    setMaintenanceDraft(emptyDraft())
+
+    if (pathname.startsWith('/write-up')) {
+      setPendingBoot([
+        'You’re on the Write-up. Ask me about the Guide-led move-in flow anytime.',
+      ])
+      return
+    }
+
+    const scene = sceneFromPath(pathname)
+
+    if (scene === 'maintenance') {
+      setChatCollapsed(false)
+      setMaintenancePhase('listening')
+      setMaintenanceDraft(emptyDraft())
+    }
 
     switch (scene) {
       case 'welcome':
-        setPhotos([])
-        setPhotosDone(false)
-        setNotifications(EMPTY_NOTIFICATIONS)
-        setNotificationsDone(false)
-        setAutopay(null)
         setPendingBoot([...WELCOME_SEQUENCE])
         break
       case 'checklist':
-        setPhotos([])
-        setPhotosDone(false)
-        setNotifications(EMPTY_NOTIFICATIONS)
-        setNotificationsDone(false)
-        setAutopay(null)
         setPendingBoot([
           "I'm here while you work through the checklist. Ask about photos, notifications, or autopay anytime.",
         ])
         break
-      case 'complete': {
-        setPhotos(buildRoomPhotos())
-        setPhotosDone(true)
-        setNotifications(seedNotifications())
-        setNotificationsDone(true)
-        setAutopay(seedAutopay())
+      case 'complete':
         setPendingBoot([...COMPLETE_SEED_MESSAGES])
         break
-      }
       case 'maintenance':
-        setPhotos(buildRoomPhotos())
-        setPhotosDone(true)
-        setNotifications(seedNotifications())
-        setNotificationsDone(true)
-        setAutopay(seedAutopay())
-        setMaintenancePhase('listening')
-        setMaintenanceDraft(emptyDraft())
-        setPendingBoot([...MAINTENANCE_PROACTIVE])
+        setPendingBoot(
+          checklistComplete
+            ? [...MAINTENANCE_READY_PROACTIVE]
+            : [...MAINTENANCE_PROACTIVE],
+        )
         break
       case 'nudges':
-        // Opted in so the nudge sequence can reach them; photos still incomplete
-        setPhotos([])
-        setPhotosDone(false)
-        setNotifications(seedNotifications())
-        setNotificationsDone(true)
-        setAutopay(null)
         setPendingBoot([...NUDGES_SEED_MESSAGES])
         break
       case 'measure':
-        setPhotos(buildRoomPhotos())
-        setPhotosDone(true)
-        setNotifications(seedNotifications())
-        setNotificationsDone(true)
-        setAutopay(seedAutopay())
         setPendingBoot([...MEASURE_SEED_MESSAGES])
         break
     }
@@ -372,7 +365,7 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       setChatCollapsed,
       clearPendingBoot,
       resetDemo,
-      seedForScene,
+      bootGuideForPath,
     }),
     [
       photos,
@@ -404,7 +397,7 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       pendingBoot,
       clearPendingBoot,
       resetDemo,
-      seedForScene,
+      bootGuideForPath,
     ],
   )
 

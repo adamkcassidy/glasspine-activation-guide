@@ -258,6 +258,11 @@ export const MAINTENANCE_PROACTIVE = [
   `Tell me what's going on (or tap a chip). For gas, fire, flooding, or sparking outlets, call 555-0142 first — I'll help with everything else right here.`,
 ] as const
 
+export const MAINTENANCE_READY_PROACTIVE = [
+  `Hey Jordan — looks like something might need attention in Apt 4B.`,
+  `Your move-in checklist is done, so we can jump straight in. Tell me what's going on (or tap a chip). For gas, fire, flooding, or sparking outlets, call 555-0142 first.`,
+] as const
+
 export const NUDGES_SEED_MESSAGES = [
   `This timeline shows mocked nudges we’d send if move-in steps stall — email, SMS, and push. They only reach residents who opted into notifications on the checklist. Nothing is actually sent here.`,
 ] as const

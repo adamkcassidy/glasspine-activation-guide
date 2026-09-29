@@ -1,12 +1,20 @@
-import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, type ReactNode } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { DemoSwitcher } from '@/components/DemoSwitcher'
 import { GuideDock } from '@/components/guide/GuideDock'
 import { MetaBar } from '@/components/MetaBar'
 import { PineMark } from '@/components/PineMark'
+import { useChecklist } from '@/lib/checklist-state'
 import { RESIDENT } from '@/lib/resident'
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const location = useLocation()
+  const { bootGuideForPath } = useChecklist()
+
+  useEffect(() => {
+    bootGuideForPath(location.pathname)
+  }, [location.pathname, bootGuideForPath])
+
   return (
     <div className="flex min-h-svh w-full flex-col">
       <MetaBar />
