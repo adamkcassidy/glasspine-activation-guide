@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Building2, Check, Loader2, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -83,6 +84,130 @@ export function AutopaySetup() {
     setQuery('')
   }
 
+  const modal =
+    open &&
+    createPortal(
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/40 p-4 backdrop-blur-[2px]"
+        role="presentation"
+        onClick={closeModal}
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          className="w-full max-w-sm rounded-2xl border border-border/80 bg-card p-4 shadow-lg animate-soft-rise"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div>
+              <h2 id={titleId} className="font-medium">
+                Connect your bank
+              </h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Mock institution search — nothing is linked for real.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full"
+              onClick={closeModal}
+              disabled={step === 'verifying'}
+              aria-label="Close"
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
+
+          {step === 'pick' && (
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search banks…"
+                  className="bg-background pl-8"
+                  autoFocus
+                />
+              </div>
+              <ul className="max-h-56 space-y-1.5 overflow-y-auto">
+                {filteredBanks.length === 0 ? (
+                  <li className="px-1 py-3 text-center text-sm text-muted-foreground">
+                    No banks match “{query.trim()}”
+                  </li>
+                ) : (
+                  filteredBanks.map((bank) => (
+                    <li key={bank.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelected(bank.id)}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
+                          selected === bank.id
+                            ? 'border-primary/40 bg-primary/5'
+                            : 'border-border/70 hover:bg-muted/50',
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'flex size-4 shrink-0 items-center justify-center rounded-full border',
+                            selected === bank.id
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-input',
+                          )}
+                        >
+                          {selected === bank.id && <Check className="size-2.5" />}
+                        </span>
+                        <span className="font-medium">{bank.name}</span>
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
+              <Button
+                type="button"
+                className="w-full"
+                onClick={() => setStep('verifying')}
+                disabled={!selected || filteredBanks.length === 0}
+              >
+                Continue with {BANKS.find((b) => b.id === selected)?.name ?? 'bank'}
+              </Button>
+            </div>
+          )}
+
+          {step === 'verifying' && (
+            <div className="flex flex-col items-center gap-3 py-8 text-center">
+              <Loader2 className="size-8 animate-spin text-primary" />
+              <div>
+                <p className="font-medium">Verifying…</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Securely connecting to {BANKS.find((b) => b.id === selected)?.name}.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {step === 'success' && (
+            <div className="flex flex-col items-center gap-3 py-8 text-center animate-check-pop">
+              <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Check className="size-6" />
+              </div>
+              <div>
+                <p className="font-medium">Checking ••1234 connected</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {BANKS.find((b) => b.id === selected)?.name} is ready for autopay.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>,
+      document.body,
+    )
+
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
@@ -96,127 +221,7 @@ export function AutopaySetup() {
       <p className="text-[11px] text-muted-foreground">
         Mock Plaid-style connect — nothing is charged in this demo.
       </p>
-
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/25 p-4 backdrop-blur-[2px]"
-          role="presentation"
-          onClick={closeModal}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            className="w-full max-w-sm rounded-2xl border border-border/80 bg-card p-4 shadow-lg animate-soft-rise"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-3 flex items-start justify-between gap-2">
-              <div>
-                <h2 id={titleId} className="font-medium">
-                  Connect your bank
-                </h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Mock institution search — nothing is linked for real.
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full"
-                onClick={closeModal}
-                disabled={step === 'verifying'}
-                aria-label="Close"
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-
-            {step === 'pick' && (
-              <div className="space-y-3">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search banks…"
-                    className="bg-background pl-8"
-                    autoFocus
-                  />
-                </div>
-                <ul className="max-h-56 space-y-1.5 overflow-y-auto">
-                  {filteredBanks.length === 0 ? (
-                    <li className="px-1 py-3 text-center text-sm text-muted-foreground">
-                      No banks match “{query.trim()}”
-                    </li>
-                  ) : (
-                    filteredBanks.map((bank) => (
-                      <li key={bank.id}>
-                        <button
-                          type="button"
-                          onClick={() => setSelected(bank.id)}
-                          className={cn(
-                            'flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
-                            selected === bank.id
-                              ? 'border-primary/40 bg-primary/5'
-                              : 'border-border/70 hover:bg-muted/50',
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'flex size-4 shrink-0 items-center justify-center rounded-full border',
-                              selected === bank.id
-                                ? 'border-primary bg-primary text-primary-foreground'
-                                : 'border-input',
-                            )}
-                          >
-                            {selected === bank.id && <Check className="size-2.5" />}
-                          </span>
-                          <span className="font-medium">{bank.name}</span>
-                        </button>
-                      </li>
-                    ))
-                  )}
-                </ul>
-                <Button
-                  type="button"
-                  className="w-full"
-                  onClick={() => setStep('verifying')}
-                  disabled={!selected || filteredBanks.length === 0}
-                >
-                  Continue with {BANKS.find((b) => b.id === selected)?.name ?? 'bank'}
-                </Button>
-              </div>
-            )}
-
-            {step === 'verifying' && (
-              <div className="flex flex-col items-center gap-3 py-8 text-center">
-                <Loader2 className="size-8 animate-spin text-primary" />
-                <div>
-                  <p className="font-medium">Verifying…</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Securely connecting to {BANKS.find((b) => b.id === selected)?.name}.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {step === 'success' && (
-              <div className="flex flex-col items-center gap-3 py-8 text-center animate-check-pop">
-                <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Check className="size-6" />
-                </div>
-                <div>
-                  <p className="font-medium">Checking ••1234 connected</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {BANKS.find((b) => b.id === selected)?.name} is ready for autopay.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {modal}
     </div>
   )
 }

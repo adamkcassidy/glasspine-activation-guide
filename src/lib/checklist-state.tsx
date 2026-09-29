@@ -74,6 +74,7 @@ export type MaintenanceDraft = {
   photoSrc: string | null
   permissionToEnter: boolean
   ticketId: string | null
+  submittedAt: string | null
 }
 
 export type ChecklistState = {
@@ -102,6 +103,7 @@ export type ChecklistState = {
   chooseMaintenanceRoutine: () => void
   submitMaintenanceRequest: () => string
   resetMaintenance: () => void
+  startMaintenanceReport: () => void
   // Chat / demo session
   messages: ChatMessage[]
   chips: string[]
@@ -133,6 +135,7 @@ const DEFAULT_DRAFT: MaintenanceDraft = {
   photoSrc: null,
   permissionToEnter: true,
   ticketId: null,
+  submittedAt: null,
 }
 
 function buildRoomPhotos(takenAt = new Date().toISOString()): UnitPhoto[] {
@@ -233,7 +236,11 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
 
   const submitMaintenanceRequest = useCallback(() => {
     const ticketId = `WO-${Math.floor(10000 + Math.random() * 90000)}`
-    setMaintenanceDraft((prev) => ({ ...prev, ticketId }))
+    setMaintenanceDraft((prev) => ({
+      ...prev,
+      ticketId,
+      submittedAt: new Date().toISOString(),
+    }))
     setMaintenancePhase('submitted')
     return ticketId
   }, [])
@@ -241,6 +248,21 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
   const resetMaintenance = useCallback(() => {
     setMaintenancePhase('listening')
     setMaintenanceDraft(emptyDraft())
+  }, [])
+
+  const startMaintenanceReport = useCallback(() => {
+    const { photosDone: pd, notificationsDone: nd, autopay: ap } = checklistRef.current
+    const checklistComplete = pd && nd && ap !== null
+
+    setChatCollapsed(false)
+    setMaintenancePhase('listening')
+    setMaintenanceDraft(emptyDraft())
+    setMessages([])
+    setChips([])
+    setLastSource(null)
+    setPendingBoot(
+      checklistComplete ? [...MAINTENANCE_READY_PROACTIVE] : [...MAINTENANCE_PROACTIVE],
+    )
   }, [])
 
   const clearPendingBoot = useCallback(() => {
@@ -273,9 +295,6 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
 
   /** Boots Guide chat for the current route. Never clears checklist progress. */
   const bootGuideForPath = useCallback((pathname: string) => {
-    const { photosDone: pd, notificationsDone: nd, autopay: ap } = checklistRef.current
-    const checklistComplete = pd && nd && ap !== null
-
     setMessages([])
     setChips([])
     setLastSource(null)
@@ -290,7 +309,7 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
     const scene = sceneFromPath(pathname)
 
     if (scene === 'maintenance') {
-      setChatCollapsed(false)
+      setChatCollapsed(true)
       setMaintenancePhase('listening')
       setMaintenanceDraft(emptyDraft())
     }
@@ -308,11 +327,8 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
         setPendingBoot([...COMPLETE_SEED_MESSAGES])
         break
       case 'maintenance':
-        setPendingBoot(
-          checklistComplete
-            ? [...MAINTENANCE_READY_PROACTIVE]
-            : [...MAINTENANCE_PROACTIVE],
-        )
+        // Flow starts when the resident taps Report an issue.
+        setPendingBoot(null)
         break
       case 'nudges':
         setPendingBoot([...NUDGES_SEED_MESSAGES])
@@ -354,6 +370,7 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       chooseMaintenanceRoutine,
       submitMaintenanceRequest,
       resetMaintenance,
+      startMaintenanceReport,
       messages,
       chips,
       lastSource,
@@ -390,6 +407,7 @@ export function ChecklistProvider({ children }: { children: ReactNode }) {
       chooseMaintenanceRoutine,
       submitMaintenanceRequest,
       resetMaintenance,
+      startMaintenanceReport,
       messages,
       chips,
       lastSource,

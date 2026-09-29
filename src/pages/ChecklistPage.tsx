@@ -37,7 +37,7 @@ export function ChecklistPage() {
 
       <ChecklistItem
         title="Document unit condition"
-        description="Photo each room — a dated record from move-in day"
+        description="Document each room now — a timestamped record that protects your deposit and gives you and your property manager the same reference point if a dispute comes up later."
         done={photosDone}
         icon={Camera}
       >
@@ -46,7 +46,7 @@ export function ChecklistPage() {
 
       <ChecklistItem
         title="Turn on notifications"
-        description="Opt into email, SMS, and/or push so reminders can reach you"
+        description="Stay in the loop for as long as you live here — maintenance updates, rent reminders, and anything that needs your attention, so nothing catches you off guard."
         done={notificationsDone}
         icon={Bell}
       >

@@ -82,13 +82,19 @@ const CHANNEL_ICON = {
   push: Smartphone,
 } as const
 
+const CHANNEL_LABEL = {
+  email: 'Email',
+  sms: 'SMS',
+  push: 'Push',
+} as const
+
 export function NudgesPage() {
   const { photosDone, notificationsDone, autopayDone, notifications } = useChecklist()
   const state: NudgeState = { photosDone, notificationsDone, autopayDone, notifications }
 
   const optedChannels = (['email', 'sms', 'push'] as const)
     .filter((k) => notifications[k])
-    .map((k) => k.toUpperCase())
+    .map((k) => CHANNEL_LABEL[k])
 
   const day5Parts: string[] = []
   if (!notificationsDone) day5Parts.push('notifications')
@@ -162,8 +168,8 @@ export function NudgesPage() {
                   <span className="text-xs font-medium uppercase tracking-wider text-primary/80">
                     {frame.dayLabel}
                   </span>
-                  <Badge variant="secondary" className="h-5 text-[10px] font-normal capitalize">
-                    {frame.channel}
+                  <Badge variant="secondary" className="h-5 text-[10px] font-normal">
+                    {CHANNEL_LABEL[frame.channel]}
                   </Badge>
                   {stopped && (
                     <Badge variant="secondary" className="h-5 text-[10px] font-normal">
