@@ -67,7 +67,7 @@ export function ChecklistPage() {
 
       {allDone && (
         <Button asChild className="w-full sm:w-auto">
-          <Link to="/complete">See confirmation</Link>
+          <Link to="/complete">Go to Dashboard</Link>
         </Button>
       )}
     </div>
